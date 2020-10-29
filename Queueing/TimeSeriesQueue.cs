@@ -19,8 +19,6 @@ namespace Sitescope2RemoteWrite.Queueing
     {
         private ConcurrentQueue<TimeSeries> _workItems =
             new ConcurrentQueue<TimeSeries>();
-        private BlockingCollection<XDocument> _workItems2 =
-            new BlockingCollection<XDocument>(new ConcurrentQueue<XDocument>());
         private SemaphoreSlim _signal = new SemaphoreSlim(0);
 
         public async Task<TimeSeries> DequeueAsync(CancellationToken cancellationToken)

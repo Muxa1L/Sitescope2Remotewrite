@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -29,22 +30,13 @@ namespace Sitescope2RemoteWrite.Processing
     public class XmlProcessor : BackgroundService
     {
         private readonly ILogger<XmlProcessor> _logger;
-        private readonly ConcurrentQueue<XDocument> _queue;
         public IServiceProvider Services { get; }
         public XmlProcessor(IServiceProvider services, ILogger<XmlProcessor> logger)
         {
-            _queue = new ConcurrentQueue<XDocument>();
             _logger = logger;
             Services = services;
         }
 
-        public void EnqueueTask(XDocument task)
-        {
-            if (task != null)
-            {
-                _queue.Enqueue(task);
-            }
-        }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
 
@@ -53,34 +45,36 @@ namespace Sitescope2RemoteWrite.Processing
             );
             await DoWork(stoppingToken);
         }
+
         private async Task DoWork(CancellationToken stoppingToken)
         {
-            IXmlTaskQueue queue;
+            IXmlTaskQueue xmlQueue;
+            IMonitorQueue monitorQueue;
             using (var scope = Services.CreateScope())
             {
-                queue = scope.ServiceProvider.GetRequiredService<IXmlTaskQueue>();
+                xmlQueue = scope.ServiceProvider.GetRequiredService<IXmlTaskQueue>();
+                monitorQueue = scope.ServiceProvider.GetRequiredService<IMonitorQueue>();
             }
             while (!stoppingToken.IsCancellationRequested)
             {
-                var xml = await queue.DequeueAsync(stoppingToken);
+                var xml = await xmlQueue.DequeueAsync(stoppingToken);
                 try
                 {
-                    var monitors = GetMonitors(xml);
+                    ProcessDocuments(xml, monitorQueue);
                 }
 
                 catch (Exception ex)
                 {
-                    _logger.LogCritical("Could not get data from doc {0}\r\n\r\n{1}", ex.Message, xml.ToString());
+                    _logger.LogCritical("Could not get data from document \r\n{0}\r\n{1}\r\n{2}", ex.Message, ex.StackTrace, xml.ToString());
 
                 }
             }
         }
-
-        private List<Models.Monitor> GetMonitors(XDocument xml)
+        
+        private void ProcessDocuments(XDocument xml, IMonitorQueue monitorQueue)
         {
             var source = xml.Element("performanceMonitors").Attribute("collectorHost").Value.ToLower();
             var monitors = xml.Descendants("monitor");
-            var result = new List<Models.Monitor>(monitors.Count());
             foreach (var monitor in monitors)
             {
                 var mon = new Models.Monitor()
@@ -105,9 +99,9 @@ namespace Sitescope2RemoteWrite.Processing
                     counters.Add(cntr);
                 }
                 mon.Counters = counters;
-                result.Add(mon);
+                monitorQueue.EnqueueMonitor(mon);
             }
-            return result;
         }
+
     }
 }

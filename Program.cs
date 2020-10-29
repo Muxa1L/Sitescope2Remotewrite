@@ -22,7 +22,10 @@ namespace Sitescope2RemoteWrite
                 .ConfigureServices(services =>
                 {
                     services.AddHostedService<XmlProcessor>();
+                    services.AddHostedService<MonitorProcessor>();
                     services.AddSingleton<IXmlTaskQueue, XmlTaskQueue>();
+                    services.AddSingleton<IMonitorQueue, MonitorQueue>();
+                    services.AddSingleton<ITimeSeriesQueue, TimeSeriesQueue>();
                 });
     }
 }
