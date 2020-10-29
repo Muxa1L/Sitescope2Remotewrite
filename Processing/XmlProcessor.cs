@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Sitescope2RemoteWrite.Helpers;
+using Sitescope2RemoteWrite.Queueing;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Sitescope2RemoteWrite.Processing;
+using Sitescope2RemoteWrite.Queueing;
 
 namespace Sitescope2RemoteWrite
 {

@@ -1,4 +1,4 @@
-using MetricReceiver;
+using Sitescope2RemoteWrite.Helpers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
