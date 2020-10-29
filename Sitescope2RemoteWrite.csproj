@@ -5,7 +5,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Transformer.cs" />
+    <Compile Remove="Transformer2.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Transformer2.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="protobuf-net" Version="3.0.52" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Transformer.cs" />
   </ItemGroup>
 
 

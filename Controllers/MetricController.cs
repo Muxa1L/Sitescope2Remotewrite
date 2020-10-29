@@ -1,9 +1,8 @@
-﻿using System.Xml.Linq;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Sitescope2RemoteWrite.Processing;
+using System.Xml.Linq;
 
 namespace MetricReceiver.Controllers
 {
@@ -11,11 +10,11 @@ namespace MetricReceiver.Controllers
     [Route("/")]
     public class MetricController : Controller
     {
-        private readonly XmlProcessor _xmlprocessor;
+        private readonly IXmlTaskQueue _xmlprocessor;
 
         private readonly ILogger<MetricController> _logger;
 
-        public MetricController (XmlProcessor xmlprocessor, ILogger<MetricController> logger)
+        public MetricController(IXmlTaskQueue xmlprocessor, ILogger<MetricController> logger)
         {
             _logger = logger;
             _xmlprocessor = xmlprocessor;
@@ -24,15 +23,16 @@ namespace MetricReceiver.Controllers
         [HttpPost("send")]
         public void Post([FromBody] XDocument request)
         {
-            _xmlprocessor.EnqueueTask(request);
+            _xmlprocessor.EnqueueXml(request);
         }
 
         [HttpGet("_health")]
-        public ActionResult HealthCheck(){
+        public ActionResult HealthCheck()
+        {
             if (false)
                 return StatusCode(StatusCodes.Status503ServiceUnavailable);
             else
-                return StatusCode(StatusCodes.Status202Accepted);            
+                return StatusCode(StatusCodes.Status202Accepted);
         }
     }
 }

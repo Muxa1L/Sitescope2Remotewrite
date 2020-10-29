@@ -1,17 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using MuxLibrary;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace MetricReceiver
+namespace Sitescope2RemoteWrite.Helpers
 {
     public class XDocumentInputFormatter : InputFormatter, IInputFormatter, IApiRequestFormatMetadataProvider
     {
@@ -40,7 +35,7 @@ namespace MetricReceiver
                 var xmlDoc = XDocument.Parse(xml);
                 return InputFormatterResult.Success(xmlDoc);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.Error.WriteLine("Error on parsing XML " + ex.Message);
                 return null;

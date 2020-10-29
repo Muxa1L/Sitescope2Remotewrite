@@ -1,15 +1,27 @@
-using System.Collections.Generic;
 using ProtoBuf;
+using System.Collections.Generic;
 
-namespace Sitescope2RemoteWrite.PromPb{
+namespace Sitescope2RemoteWrite.PromPb
+{
     [ProtoContract]
-    class WriteRequest {
+    public class WriteRequest
+    {
+        public WriteRequest()
+        {
+            timeseries = new List<TimeSeries>();
+        }
         [ProtoMember(1)]
         List<TimeSeries> timeseries;
     }
 
     [ProtoContract]
-    class TimeSeries{
+    public class TimeSeries
+    {
+        public TimeSeries()
+        {
+            labels = new List<Label>();
+            samples = new List<Sample>();
+        }
         [ProtoMember(1)]
         List<Label> labels;
         [ProtoMember(2)]
@@ -17,7 +29,8 @@ namespace Sitescope2RemoteWrite.PromPb{
     }
 
     [ProtoContract]
-    class Sample {
+    public class Sample
+    {
         [ProtoMember(1)]
         double value;
         [ProtoMember(2)]
@@ -25,7 +38,8 @@ namespace Sitescope2RemoteWrite.PromPb{
     }
 
     [ProtoContract]
-    class Label{
+    public class Label
+    {
         [ProtoMember(1)]
         string name;
         [ProtoMember(2)]

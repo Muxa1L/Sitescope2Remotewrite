@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace MuxLibrary
+namespace Sitescope2RemoteWrite.Helpers
 {
     public static class Extensions
     {
@@ -23,7 +20,8 @@ namespace MuxLibrary
             return path;
         }
 
-        public static long ToUnixTimeStamp(this DateTime dt){
+        public static long ToUnixTimeStamp(this DateTime dt)
+        {
             return (long)(dt.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         }
         public static DateTime UnixTimeStampToDateTime(this long unixTimeStamp)
@@ -52,7 +50,7 @@ namespace MuxLibrary
                 return memory.ToArray();
             }
         }
-        
+
         public static bool IsGZip(this byte[] arr)
         {
             return arr.Length >= 2 && arr[0] == 31 && arr[1] == 139;

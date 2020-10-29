@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MuxLibrary.Data
+namespace Sitescope2RemoteWrite.Models
 {
     public class Metric : ICloneable
     {

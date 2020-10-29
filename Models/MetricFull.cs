@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace MuxLibrary.Data
+namespace Sitescope2RemoteWrite.Models
 {
     public class MetricFull : ICloneable
     {
@@ -23,7 +20,7 @@ namespace MuxLibrary.Data
         public string ServerTM;
         public string TemplateName;
         public string Instance;
-        public DateTime Time;
+        public long Timestamp;
         public string value;
 
         public object Clone()
@@ -40,7 +37,7 @@ namespace MuxLibrary.Data
             result.target = this.Target;
             result.targetIP = this.TargetIP;
             result.type = this.Type;
-            result.time = this.Time;
+            result.timestamp = this.Timestamp;
             result.Counters = new List<Counter>{
                 new Counter{
                     name = this.MetricName,

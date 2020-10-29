@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace MuxLibrary.Data
+namespace Sitescope2RemoteWrite.Models
 {
     public class Monitor//:IDisposable
     {
@@ -12,7 +8,7 @@ namespace MuxLibrary.Data
         public string type;
         public string target;
         public string targetIP;
-        public DateTime time;
+        public long timestamp;
         public string sourceTemplateName;
         public string name;
         public List<Counter> Counters;

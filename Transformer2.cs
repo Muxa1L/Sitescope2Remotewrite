@@ -4,15 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using System.IO;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Reflection;
-using MuxLibrary;
 using Microsoft.Extensions.Logging;
-using Confluent.Kafka;
-using Prometheus;
 
 namespace MetricTransform
 {
