@@ -1,4 +1,5 @@
 using ProtoBuf;
+using System;
 using System.Collections.Generic;
 
 namespace Sitescope2RemoteWrite.PromPb
@@ -16,7 +17,7 @@ namespace Sitescope2RemoteWrite.PromPb
     }
 
     [ProtoContract]
-    public class TimeSeries
+    public class TimeSeries : ICloneable
     {
         [ProtoMember(1)]
         List<Label> labels;
@@ -38,6 +39,14 @@ namespace Sitescope2RemoteWrite.PromPb
         {
             samples.Add(new Sample(timestamp, value));
         }
+
+        public object Clone()
+        {
+            var result = new TimeSeries();
+            foreach (var label in this.labels)
+                result.labels.Add((Label)label.Clone());
+            return result;
+        }
     }
 
     [ProtoContract]
@@ -56,7 +65,7 @@ namespace Sitescope2RemoteWrite.PromPb
     }
 
     [ProtoContract]
-    public class Label
+    public class Label : ICloneable
     {
         [ProtoMember(1)]
         string name;
@@ -67,6 +76,11 @@ namespace Sitescope2RemoteWrite.PromPb
         {
             this.name = _name;
             this.value = _value;
+        }
+
+        public object Clone()
+        {
+            return new Label(this.name, this.value);
         }
     }
 }

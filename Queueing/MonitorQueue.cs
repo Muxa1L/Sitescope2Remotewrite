@@ -17,9 +17,9 @@ namespace Sitescope2RemoteWrite.Queueing
 
     public class MonitorQueue : IMonitorQueue
     {
-        private ConcurrentQueue<Models.Monitor> _workItems =
+        private readonly ConcurrentQueue<Models.Monitor> _workItems =
             new ConcurrentQueue<Models.Monitor>();
-        private SemaphoreSlim _signal = new SemaphoreSlim(0);
+        private readonly SemaphoreSlim _signal = new SemaphoreSlim(0);
 
         public async Task<Models.Monitor> DequeueAsync(CancellationToken cancellationToken)
         {

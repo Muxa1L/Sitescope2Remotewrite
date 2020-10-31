@@ -17,9 +17,9 @@ namespace Sitescope2RemoteWrite.Queueing
 
     public class TimeSeriesQueue : ITimeSeriesQueue
     {
-        private ConcurrentQueue<TimeSeries> _workItems =
+        private readonly ConcurrentQueue<TimeSeries> _workItems =
             new ConcurrentQueue<TimeSeries>();
-        private SemaphoreSlim _signal = new SemaphoreSlim(0);
+        private readonly SemaphoreSlim _signal = new SemaphoreSlim(0);
 
         public async Task<TimeSeries> DequeueAsync(CancellationToken cancellationToken)
         {
