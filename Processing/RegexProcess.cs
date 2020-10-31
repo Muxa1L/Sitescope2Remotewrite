@@ -28,9 +28,9 @@ namespace Sitescope2RemoteWrite.Processing
 
     public class CounterRegexRule
     {
-        public Regex MonitorName;
-        public Regex CounterName;
-        public Regex ValueRegexp;
+        public Regex Monitor;
+        public Regex Counter;
+        public Regex Value;
     }
 
     public class RegexProcess
@@ -43,20 +43,20 @@ namespace Sitescope2RemoteWrite.Processing
             CounterRegexps = new List<CounterRegexRule>();
             foreach (var pathRex in config.GetSection("PathsProcessing").Get<List<Dictionary<string, string>>>())
             {
-                pathRex.TryGetValue("regexp", out string regex);
+                pathRex.TryGetValue("regexp",   out string regex);
                 pathRex.TryGetValue("defaults", out string defaults);
                 PathRegexps.Add(new PathRegexRule(regex, defaults));
             }
             foreach (var cntrRex in config.GetSection("CounterProcessing").Get<List<Dictionary<string, string>>>())
             {
-                cntrRex.TryGetValue("monitorName", out string monitorName);
-                cntrRex.TryGetValue("counterName", out string counterName);
-                cntrRex.TryGetValue("valueRegexp", out string valueRegexp);
+                cntrRex.TryGetValue("monitor", out string _monitor);
+                cntrRex.TryGetValue("counter", out string _counter);
+                cntrRex.TryGetValue("valuep",  out string _value);
                 CounterRegexps.Add(new CounterRegexRule()
                 {
-                    MonitorName = !string.IsNullOrEmpty(monitorName) ? new Regex(monitorName, RegexOptions.Compiled) : null,
-                    CounterName = !string.IsNullOrEmpty(counterName) ? new Regex(counterName, RegexOptions.Compiled) : null,
-                    ValueRegexp = !string.IsNullOrEmpty(valueRegexp) ? new Regex(valueRegexp, RegexOptions.Compiled) : null
+                    Monitor = !string.IsNullOrEmpty(_monitor) ? new Regex(_monitor, RegexOptions.Compiled) : null,
+                    Counter = !string.IsNullOrEmpty(_counter) ? new Regex(_counter, RegexOptions.Compiled) : null,
+                    Value =   !string.IsNullOrEmpty(_value)   ? new Regex(_value,   RegexOptions.Compiled) : null
                 });
             }
         }
