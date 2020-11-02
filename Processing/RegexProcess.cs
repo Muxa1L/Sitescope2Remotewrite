@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Sitescope2RemoteWrite.Models;
 using Sitescope2RemoteWrite.PromPb;
 using System;
 using System.Collections.Generic;
@@ -37,6 +38,7 @@ namespace Sitescope2RemoteWrite.Processing
     {
         private readonly List<PathRegexRule> PathRegexps;
         private readonly List<CounterRegexRule> CounterRegexps;
+        private readonly Regex DoubleRegexp = new Regex("[\\d.]+", RegexOptions.Compiled);
         public RegexProcess (IConfiguration config)
         {
             PathRegexps = new List<PathRegexRule>();
@@ -51,7 +53,7 @@ namespace Sitescope2RemoteWrite.Processing
             {
                 cntrRex.TryGetValue("monitor", out string _monitor);
                 cntrRex.TryGetValue("counter", out string _counter);
-                cntrRex.TryGetValue("valuep",  out string _value);
+                cntrRex.TryGetValue("value",  out string _value);
                 CounterRegexps.Add(new CounterRegexRule()
                 {
                     Monitor = !string.IsNullOrEmpty(_monitor) ? new Regex(_monitor, RegexOptions.Compiled) : null,
@@ -84,6 +86,88 @@ namespace Sitescope2RemoteWrite.Processing
                     break;
                 }
             }
+        }
+
+        public List<TimeSeries> ProcessCounters(TimeSeries baseTS, Monitor monitor)
+        {
+            var result = new List<TimeSeries>();
+            var matchedCounters = new List<string>();
+            foreach (var cntrRule in CounterRegexps)
+            {
+                bool monitorName = false;
+                bool counterName = false;
+                if (cntrRule.Monitor != null)
+                {
+                    if (cntrRule.Monitor.Match(monitor.name).Success)
+                        monitorName = true;
+                    else
+                        continue;
+                }
+                if (cntrRule.Counter != null)
+                {
+                    foreach (var counter in monitor.Counters)
+                    {
+                        var cntrMatch = cntrRule.Counter.Match(counter.name);
+                        if (cntrMatch.Success)
+                        {
+                            matchedCounters.Add(counter.name);
+                            if (cntrRule.Value != null)
+                            {
+                                var valueMatches = cntrRule.Value.Matches(counter.value);
+                                foreach(Match valueMatch in valueMatches)
+                                {
+                                    string name = counter.name;
+                                    double value = double.NaN;
+                                    if (valueMatch.Groups.Count > 1)
+                                    {
+                                        for (int i = 1; i < valueMatch.Groups.Count; i++)
+                                        {
+                                            var group = valueMatch.Groups[i];
+                                            if (group.Name.Contains("__name__"))
+                                            {
+                                                name = group.Name.Replace("__name__", group.Value);
+                                            }
+                                            else if (group.Name == "value")
+                                            {
+                                                double.TryParse(group.Value, out value);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        //name = counter.name;
+                                        double.TryParse(counter.value, out value);
+                                    }
+                                    if (!double.IsNaN(value))
+                                    {
+                                        TimeSeries timeSerie = (TimeSeries)baseTS.Clone();
+                                        timeSerie.AddLabel("__name__", name);
+                                        timeSerie.AddSample(monitor.timestamp, value);
+                                        result.Add(timeSerie);
+                                    }
+                                    
+                                }
+                            }
+                        }
+                    }
+                    
+                }
+            }
+            foreach (var counter in monitor.Counters)
+            {
+                if (!matchedCounters.Contains(counter.name)){
+                    var match = DoubleRegexp.Match(counter.value);
+                    if (match.Success)
+                    {
+                        TimeSeries timeSerie = (TimeSeries)baseTS.Clone();
+                        timeSerie.AddLabel("__name__", counter.name);
+                        timeSerie.AddSample(monitor.timestamp, double.Parse(match.Value));
+                    }
+                    
+                }
+                
+            }
+            return result;
         }
     }
 }

@@ -85,13 +85,15 @@ namespace Sitescope2RemoteWrite.Processing
 
         private void ProcessMonitors(Models.Monitor monitor, ITimeSeriesQueue timeSeriesQueue)
         {
-            var timeSeries = new TimeSeries();
-            timeSeries.AddLabel("path", monitor.path);
-            timeSeries.AddLabel("name", monitor.name);
-            timeSeries.AddLabel("type", monitor.type);
-            timeSeries.AddLabel("target", monitor.target.ToLower());
-            timeSeries.AddLabel("targetip", monitor.targetIP.ToLower());
-            RegexProcess.AddLabelsFromPath(monitor.path, ref timeSeries);
+            var baseTS = new TimeSeries();
+            baseTS.AddLabel("path", monitor.path);
+            baseTS.AddLabel("name", monitor.name);
+            baseTS.AddLabel("type", monitor.type);
+            baseTS.AddLabel("target", monitor.target.ToLower());
+            baseTS.AddLabel("targetip", monitor.targetIP.ToLower());
+            RegexProcess.AddLabelsFromPath(monitor.path, ref baseTS);
+
+            var timeSeries = RegexProcess.ProcessCounters(baseTS, monitor);
             /*foreach (var pathRex in PathRegexps)
             {
                 var match = pathRex.Match(monitor.path);
