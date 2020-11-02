@@ -14,6 +14,11 @@ namespace Sitescope2RemoteWrite.PromPb
         {
             timeseries = new List<TimeSeries>();
         }
+
+        public void AddTimeSerie(TimeSeries timeserie)
+        {
+            this.timeseries.Add(timeserie);
+        }
     }
 
     [ProtoContract]

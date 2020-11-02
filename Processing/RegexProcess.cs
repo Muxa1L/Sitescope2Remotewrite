@@ -43,13 +43,13 @@ namespace Sitescope2RemoteWrite.Processing
         {
             PathRegexps = new List<PathRegexRule>();
             CounterRegexps = new List<CounterRegexRule>();
-            foreach (var pathRex in config.GetSection("PathsProcessing").Get<List<Dictionary<string, string>>>())
+            foreach (var pathRex in config.GetSection("Paths").Get<List<Dictionary<string, string>>>())
             {
                 pathRex.TryGetValue("regexp",   out string regex);
                 pathRex.TryGetValue("defaults", out string defaults);
                 PathRegexps.Add(new PathRegexRule(regex, defaults));
             }
-            foreach (var cntrRex in config.GetSection("CounterProcessing").Get<List<Dictionary<string, string>>>())
+            foreach (var cntrRex in config.GetSection("Counter").Get<List<Dictionary<string, string>>>())
             {
                 cntrRex.TryGetValue("monitor", out string _monitor);
                 cntrRex.TryGetValue("counter", out string _counter);
@@ -162,6 +162,7 @@ namespace Sitescope2RemoteWrite.Processing
                         TimeSeries timeSerie = (TimeSeries)baseTS.Clone();
                         timeSerie.AddLabel("__name__", counter.name);
                         timeSerie.AddSample(monitor.timestamp, double.Parse(match.Value));
+                        result.Add(timeSerie);
                     }
                     
                 }

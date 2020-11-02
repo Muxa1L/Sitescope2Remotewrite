@@ -1,6 +1,7 @@
 using Sitescope2RemoteWrite.PromPb;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -9,10 +10,14 @@ namespace Sitescope2RemoteWrite.Queueing
 {
     public interface ITimeSeriesQueue
     {
-        void EnqueueXml(TimeSeries timeSeries);
+        void Enqueue(TimeSeries timeSeries);
+
+        void EnqueueList(List<TimeSeries> tsList);
 
         Task<TimeSeries> DequeueAsync(
             CancellationToken cancellationToken);
+
+        TimeSeries Dequeue();
     }
 
     public class TimeSeriesQueue : ITimeSeriesQueue
@@ -28,8 +33,21 @@ namespace Sitescope2RemoteWrite.Queueing
             return workItem;
         }
 
+        public TimeSeries Dequeue()
+        {
+            _workItems.TryDequeue(out var workItem);
+            return workItem;
+        }
 
-        void ITimeSeriesQueue.EnqueueXml(TimeSeries workItem)
+        public void EnqueueList(List<TimeSeries> tsList)
+        {
+            foreach (var timeSerie in tsList)
+            {
+                this.Enqueue(timeSerie);
+            }
+        }
+
+        public void Enqueue(TimeSeries workItem)
         {
             if (workItem == null)
             {
@@ -38,5 +56,7 @@ namespace Sitescope2RemoteWrite.Queueing
             _workItems.Enqueue(workItem);
             _signal.Release();
         }
+
+        
     }
 }

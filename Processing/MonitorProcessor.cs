@@ -43,7 +43,7 @@ namespace Sitescope2RemoteWrite.Processing
             {
                 //PathRegexps = new List<Regex>();
                 var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-                processingConfig = config.GetSection("ProcessingConfig");
+                processingConfig = config.GetSection("Processing");
                 RegexProcess = new RegexProcess(processingConfig);
                 
             }
@@ -92,30 +92,9 @@ namespace Sitescope2RemoteWrite.Processing
             baseTS.AddLabel("target", monitor.target.ToLower());
             baseTS.AddLabel("targetip", monitor.targetIP.ToLower());
             RegexProcess.AddLabelsFromPath(monitor.path, ref baseTS);
-
+            monitor.timestamp = DateTime.UtcNow.ToUnixTimeStamp() * 1000;
             var timeSeries = RegexProcess.ProcessCounters(baseTS, monitor);
-            /*foreach (var pathRex in PathRegexps)
-            {
-                var match = pathRex.Match(monitor.path);
-                if (match.Success)
-                {
-                    for (int i = 1; i < match.Groups.Count; i++) //(Group group in match.Groups)
-                    {
-                        Group group = match.Groups[i];
-                        if (!String.IsNullOrEmpty(group.Name))
-                        {
-                            var val = group.Value;
-                            if (String.IsNullOrEmpty(val))
-                                val = "empty";
-                            timeSeries.AddLabel(group.Name, val);
-                        }
-                    }
-                    break;
-                }
-            }*/
-            //timeSeries.AddLabel("sourcetemplatename", monitor.sourceTemplateName);
-            //timeSeries.Ad
-            ///throw new NotImplementedException();
+            timeSeriesQueue.EnqueueList(timeSeries);
         }
     }
 }

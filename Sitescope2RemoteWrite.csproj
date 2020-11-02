@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="IronSnappy" Version="1.3.0" />
     <PackageReference Include="protobuf-net" Version="3.0.52" />
   </ItemGroup>
 

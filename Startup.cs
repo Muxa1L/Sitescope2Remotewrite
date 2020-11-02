@@ -20,6 +20,8 @@ namespace Sitescope2RemoteWrite
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers(options => options.InputFormatters.Insert(0, new XDocumentInputFormatter()));
+            services.AddHttpClient();
+            //services.AddApplicationInsightsTelemetry();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
