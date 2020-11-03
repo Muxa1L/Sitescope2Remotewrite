@@ -3,6 +3,7 @@ using Sitescope2RemoteWrite.Models;
 using Sitescope2RemoteWrite.PromPb;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -88,6 +89,11 @@ namespace Sitescope2RemoteWrite.Processing
             }
         }
 
+        private static string NormalizeName (string name)
+        {
+            return Regex.Replace(name, "[^a-zA-Z0-9_:]", "_");
+        }
+
         public List<TimeSeries> ProcessCounters(TimeSeries baseTS, Monitor monitor)
         {
             var result = new List<TimeSeries>();
@@ -131,6 +137,11 @@ namespace Sitescope2RemoteWrite.Processing
                                             {
                                                 double.TryParse(group.Value, out value);
                                             }
+                                            else if (group.Name != "")
+                                            {
+                                                name = group.Name;
+                                                double.TryParse(group.Value, out value);
+                                            }
                                         }
                                     }
                                     else
@@ -141,7 +152,7 @@ namespace Sitescope2RemoteWrite.Processing
                                     if (!double.IsNaN(value))
                                     {
                                         TimeSeries timeSerie = (TimeSeries)baseTS.Clone();
-                                        timeSerie.AddLabel("__name__", name);
+                                        timeSerie.AddLabel("__name__", NormalizeName(name));
                                         timeSerie.AddSample(monitor.timestamp, value);
                                         result.Add(timeSerie);
                                     }
@@ -160,7 +171,7 @@ namespace Sitescope2RemoteWrite.Processing
                     if (match.Success)
                     {
                         TimeSeries timeSerie = (TimeSeries)baseTS.Clone();
-                        timeSerie.AddLabel("__name__", counter.name);
+                        timeSerie.AddLabel("__name__", NormalizeName(counter.name));
                         timeSerie.AddSample(monitor.timestamp, double.Parse(match.Value));
                         result.Add(timeSerie);
                     }
