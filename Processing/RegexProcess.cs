@@ -37,6 +37,7 @@ namespace Sitescope2RemoteWrite.Processing
 
     public class RegexProcess
     {
+        private readonly IFormatProvider culture = new System.Globalization.CultureInfo("en-US");
         private readonly List<PathRegexRule> PathRegexps;
         private readonly List<CounterRegexRule> CounterRegexps;
         private readonly Regex DoubleRegexp = new Regex("[\\d.]+", RegexOptions.Compiled);
@@ -64,7 +65,7 @@ namespace Sitescope2RemoteWrite.Processing
             }
         }
 
-        public void AddLabelsFromPath(string path, ref TimeSeries timeSeries)
+        public bool AddLabelsFromPath(string path, ref TimeSeries timeSeries)
         {
             foreach (var pathRex in PathRegexps)
             {
@@ -84,14 +85,15 @@ namespace Sitescope2RemoteWrite.Processing
                             timeSeries.AddLabel(group.Name, val);
                         }
                     }
-                    break;
+                    return true;
                 }
             }
+            return false;
         }
 
         private static string NormalizeName (string name)
         {
-            return Regex.Replace(name, "[^a-zA-Z0-9_:]", "_");
+            return Regex.Replace(name, @"[^a-zA-Z0-9_:\p{IsCyrillic}]", "_");
         }
 
         public List<TimeSeries> ProcessCounters(TimeSeries baseTS, Monitor monitor)
@@ -135,24 +137,25 @@ namespace Sitescope2RemoteWrite.Processing
                                             }
                                             else if (group.Name == "value")
                                             {
-                                                double.TryParse(group.Value, out value);
+                                                double.TryParse(group.Value, System.Globalization.NumberStyles.Float, culture, out value);
                                             }
                                             else if (group.Name != "")
                                             {
                                                 name = group.Name;
-                                                double.TryParse(group.Value, out value);
+                                                double.TryParse(group.Value, System.Globalization.NumberStyles.Float, culture, out value);
                                             }
                                         }
                                     }
                                     else
                                     {
                                         //name = counter.name;
-                                        double.TryParse(counter.value, out value);
+                                        double.TryParse(counter.value, System.Globalization.NumberStyles.Float, culture, out value);
                                     }
                                     if (!double.IsNaN(value))
                                     {
                                         TimeSeries timeSerie = (TimeSeries)baseTS.Clone();
-                                        timeSerie.AddLabel("__name__", NormalizeName(name));
+                                        timeSerie.AddLabel("__name__", monitor.name);
+                                        timeSerie.AddLabel("metric_name", name);
                                         timeSerie.AddSample(monitor.timestamp, value);
                                         result.Add(timeSerie);
                                     }
@@ -170,10 +173,15 @@ namespace Sitescope2RemoteWrite.Processing
                     var match = DoubleRegexp.Match(counter.value);
                     if (match.Success)
                     {
-                        TimeSeries timeSerie = (TimeSeries)baseTS.Clone();
-                        timeSerie.AddLabel("__name__", NormalizeName(counter.name));
-                        timeSerie.AddSample(monitor.timestamp, double.Parse(match.Value));
-                        result.Add(timeSerie);
+                        if (double.TryParse(match.Value, System.Globalization.NumberStyles.Float, culture, out double parsedValue))
+                        {
+                            TimeSeries timeSerie = (TimeSeries)baseTS.Clone();
+                            timeSerie.AddLabel("__name__", monitor.name);
+                            timeSerie.AddLabel("metric_name", counter.name);
+                            timeSerie.AddSample(monitor.timestamp, parsedValue);
+                            result.Add(timeSerie);
+                        }
+                        
                     }
                     
                 }

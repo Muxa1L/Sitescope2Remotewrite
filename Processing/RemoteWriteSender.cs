@@ -97,7 +97,7 @@ namespace Sitescope2RemoteWrite.Processing
                     if (gotSomething)
                     {
                         var client = _clientFactory.CreateClient();
-                        client.DefaultRequestHeaders.Clear();
+                        //client.DefaultRequestHeaders.Clear();
                         using (var ms = new MemoryStream())
                         {
                             ProtoBuf.Serializer.Serialize(ms, writeRequest);

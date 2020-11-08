@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Prometheus;
 
 namespace Sitescope2RemoteWrite
 {
@@ -21,6 +22,8 @@ namespace Sitescope2RemoteWrite
         {
             services.AddControllers(options => options.InputFormatters.Insert(0, new XDocumentInputFormatter()));
             services.AddHttpClient();
+                    //.UseHttpClientMetrics();
+            //httpClientBuilder.UseHttpClientMetrics();
             //services.AddApplicationInsightsTelemetry();
         }
 
@@ -35,12 +38,13 @@ namespace Sitescope2RemoteWrite
             //app.UseHttpsRedirection();
 
             app.UseRouting();
-
+            app.UseHttpMetrics();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapMetrics();
             });
         }
     }

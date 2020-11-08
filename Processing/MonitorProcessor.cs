@@ -35,10 +35,13 @@ namespace Sitescope2RemoteWrite.Processing
         private readonly IConfiguration processingConfig;
         public IServiceProvider Services { get; }
         private readonly RegexProcess RegexProcess;
-        public MonitorProcessor(IServiceProvider services, ILogger<XmlProcessor> logger)
+        private readonly IDebugQueue debugQueue;
+
+        public MonitorProcessor(IServiceProvider services, ILogger<XmlProcessor> logger, IDebugQueue debugQueue)
         {
             _logger = logger;
             Services = services;
+            this.debugQueue = debugQueue;
             using (var scope = Services.CreateScope())
             {
                 //PathRegexps = new List<Regex>();
@@ -91,8 +94,12 @@ namespace Sitescope2RemoteWrite.Processing
             baseTS.AddLabel("type", monitor.type);
             baseTS.AddLabel("target", monitor.target.ToLower());
             baseTS.AddLabel("targetip", monitor.targetIP.ToLower());
-            RegexProcess.AddLabelsFromPath(monitor.path, ref baseTS);
-            monitor.timestamp = DateTime.UtcNow.ToUnixTimeStamp() * 1000;
+            var pathFound = RegexProcess.AddLabelsFromPath(monitor.path, ref baseTS);
+            if (!pathFound)
+            {
+                debugQueue.AddPath(monitor.path);
+            }
+            //monitor.timestamp = DateTime.UtcNow.ToUnixTimeStamp() * 1000;
             var timeSeries = RegexProcess.ProcessCounters(baseTS, monitor);
             timeSeriesQueue.EnqueueList(timeSeries);
         }

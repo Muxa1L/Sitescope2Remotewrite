@@ -7,6 +7,10 @@
     <DockerfileContext>.</DockerfileContext>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="Transformer.cs" />
     <Compile Remove="Transformer2.cs" />
@@ -18,7 +22,9 @@
 
   <ItemGroup>
     <PackageReference Include="IronSnappy" Version="1.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.9" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.9" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="4.0.0" />
     <PackageReference Include="protobuf-net" Version="3.0.52" />
   </ItemGroup>
 

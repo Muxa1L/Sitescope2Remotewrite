@@ -28,6 +28,7 @@ namespace Sitescope2RemoteWrite
                     services.AddSingleton<IXmlTaskQueue, XmlTaskQueue>();
                     services.AddSingleton<IMonitorQueue, MonitorQueue>();
                     services.AddSingleton<ITimeSeriesQueue, TimeSeriesQueue>();
+                    services.AddSingleton<IDebugQueue, DebugQueue>();
                 });
     }
 }
