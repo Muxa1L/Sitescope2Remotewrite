@@ -43,4 +43,4 @@ jobs:
           push: true # optional, default is false
           tags: |
             muxa1l/sitescope2remotewrite:latest
-            muxa1l/sitescope2remotewrite:${{ GITHUB_RUN_ID }}
+            muxa1l/sitescope2remotewrite:${{ env.GITHUB_RUN_ID }}
