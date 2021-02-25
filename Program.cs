@@ -35,7 +35,6 @@ namespace Sitescope2RemoteWrite
 
                     services.AddSingleton<ReplicationStateStorage>();
                     services.AddHostedService(sp => sp.GetRequiredService<ReplicationStateStorage>());
-
                 });
     }
 }
