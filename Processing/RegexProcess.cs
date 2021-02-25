@@ -112,59 +112,58 @@ namespace Sitescope2RemoteWrite.Processing
                         continue;
                 }
                 if (cntrRule.Counter != null)
+                    continue;
+
+                foreach (var counter in monitor.Counters)
                 {
-                    foreach (var counter in monitor.Counters)
+                    var cntrMatch = cntrRule.Counter.Match(counter.name);
+                    if (cntrMatch.Success)
                     {
-                        var cntrMatch = cntrRule.Counter.Match(counter.name);
-                        if (cntrMatch.Success)
+                        matchedCounters.Add(counter.name);
+                        if (cntrRule.Value == null)
+                            continue;
+
+                        var valueMatches = cntrRule.Value.Matches(counter.value);
+                        foreach (Match valueMatch in valueMatches)
                         {
-                            matchedCounters.Add(counter.name);
-                            if (cntrRule.Value != null)
+                            string name = counter.name;
+                            double value = double.NaN;
+                            if (valueMatch.Groups.Count > 1)
                             {
-                                var valueMatches = cntrRule.Value.Matches(counter.value);
-                                foreach(Match valueMatch in valueMatches)
+                                for (int i = 1; i < valueMatch.Groups.Count; i++)
                                 {
-                                    string name = counter.name;
-                                    double value = double.NaN;
-                                    if (valueMatch.Groups.Count > 1)
+                                    var group = valueMatch.Groups[i];
+                                    if (group.Name.Contains("__name__"))
                                     {
-                                        for (int i = 1; i < valueMatch.Groups.Count; i++)
-                                        {
-                                            var group = valueMatch.Groups[i];
-                                            if (group.Name.Contains("__name__"))
-                                            {
-                                                name = group.Name.Replace("__name__", group.Value);
-                                            }
-                                            else if (group.Name == "value")
-                                            {
-                                                double.TryParse(group.Value, System.Globalization.NumberStyles.Float, culture, out value);
-                                            }
-                                            else if (group.Name != "")
-                                            {
-                                                name = group.Name;
-                                                double.TryParse(group.Value, System.Globalization.NumberStyles.Float, culture, out value);
-                                            }
-                                        }
+                                        name = group.Name.Replace("__name__", group.Value);
                                     }
-                                    else
+                                    else if (group.Name == "value")
                                     {
-                                        //name = counter.name;
-                                        double.TryParse(counter.value, System.Globalization.NumberStyles.Float, culture, out value);
+                                        double.TryParse(group.Value, System.Globalization.NumberStyles.Float, culture, out value);
                                     }
-                                    if (!double.IsNaN(value))
+                                    else if (group.Name != "")
                                     {
-                                        TimeSeries timeSerie = (TimeSeries)baseTS.Clone();
-                                        timeSerie.AddLabel("__name__", monitor.name);
-                                        timeSerie.AddLabel("metric_name", name);
-                                        timeSerie.AddSample(monitor.timestamp, value);
-                                        result.Add(timeSerie);
+                                        name = group.Name;
+                                        double.TryParse(group.Value, System.Globalization.NumberStyles.Float, culture, out value);
                                     }
-                                    
                                 }
                             }
+                            else
+                            {
+                                //name = counter.name;
+                                double.TryParse(counter.value, System.Globalization.NumberStyles.Float, culture, out value);
+                            }
+                            if (!double.IsNaN(value))
+                            {
+                                TimeSeries timeSerie = (TimeSeries)baseTS.Clone();
+                                timeSerie.AddLabel("__name__", monitor.name);
+                                timeSerie.AddLabel("metric_name", name);
+                                timeSerie.AddSample(monitor.timestamp, value);
+                                result.Add(timeSerie);
+                            }
+
                         }
                     }
-                    
                 }
             }
             foreach (var counter in monitor.Counters)

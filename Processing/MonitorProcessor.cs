@@ -31,13 +31,13 @@ namespace Sitescope2RemoteWrite.Processing
 
     public class MonitorProcessor : BackgroundService
     {
-        private readonly ILogger<XmlProcessor> _logger;
+        private readonly ILogger<MonitorProcessor> _logger;
         private readonly IConfiguration processingConfig;
         public IServiceProvider Services { get; }
         private readonly RegexProcess RegexProcess;
         private readonly IDebugQueue debugQueue;
 
-        public MonitorProcessor(IServiceProvider services, ILogger<XmlProcessor> logger, IDebugQueue debugQueue)
+        public MonitorProcessor(IServiceProvider services, ILogger<MonitorProcessor> logger, IDebugQueue debugQueue)
         {
             _logger = logger;
             Services = services;
