@@ -36,7 +36,7 @@ namespace Sitescope2RemoteWrite.Processing
 
     public class RemoteWriteSender : IHostedService, IDisposable
     {
-        private readonly ILogger<XmlProcessor> _logger;
+        private readonly ILogger<RemoteWriteSender> _logger;
         private readonly IConfiguration _remoteWriteConfig;
         private readonly IHttpClientFactory _clientFactory;
         private readonly ITimeSeriesQueue _timeSeriesQueue;
@@ -45,22 +45,26 @@ namespace Sitescope2RemoteWrite.Processing
         private IServiceProvider Services { get; }
         private int inwait = 0;
         private string remoteWriteUrl = "";
+        private int sendPeriod = 0;
 
-        public RemoteWriteSender(IServiceProvider services, ILogger<XmlProcessor> logger, IHttpClientFactory clientFactory, IConfiguration config, ITimeSeriesQueue timeSeriesQueue)
+        public RemoteWriteSender(IServiceProvider services, ILogger<RemoteWriteSender> logger, IHttpClientFactory clientFactory, IConfiguration config, ITimeSeriesQueue timeSeriesQueue)
         {
             _clientFactory = clientFactory;
             _logger = logger;
-            _semaphore = new SemaphoreSlim(1, 1);
+            
             Services = services;
             _remoteWriteConfig = config.GetSection("RemoteWrite");
             remoteWriteUrl = _remoteWriteConfig.GetValue<string>("url");
+            sendPeriod = _remoteWriteConfig.GetValue<int>("period", 1);
+            var threads = _remoteWriteConfig.GetValue<int>("threads", 1);
+            _semaphore = new SemaphoreSlim(threads, threads);
             _timeSeriesQueue = timeSeriesQueue;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("RemoteWrite sender started");
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(sendPeriod));
             return Task.CompletedTask;
         }
 
@@ -83,6 +87,7 @@ namespace Sitescope2RemoteWrite.Processing
                     WriteRequest writeRequest = new WriteRequest();
                     TimeSeries timeSerie;
                     bool gotSomething = false;
+                    var cancelToken = new CancellationTokenSource(TimeSpan.FromSeconds(sendPeriod)).Token;
                     do
                     {
                         timeSerie = _timeSeriesQueue.Dequeue();
@@ -91,9 +96,8 @@ namespace Sitescope2RemoteWrite.Processing
                             writeRequest.AddTimeSerie(timeSerie);
                             gotSomething = true;
                         }
-                            
                     }
-                    while (timeSerie != null);
+                    while (!cancelToken.IsCancellationRequested && timeSerie != null);
                     if (gotSomething)
                     {
                         var client = _clientFactory.CreateClient();
@@ -119,8 +123,12 @@ namespace Sitescope2RemoteWrite.Processing
                 {
                     _logger.LogError(ex, "Error while sending over remoteWrite");
                 }
-                Interlocked.Decrement(ref inwait);
-                _semaphore.Release();
+                finally
+                {
+                    Interlocked.Decrement(ref inwait);
+                    _semaphore.Release();
+                }
+                
             }
             
         }

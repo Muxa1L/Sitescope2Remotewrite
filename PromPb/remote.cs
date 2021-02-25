@@ -40,6 +40,11 @@ namespace Sitescope2RemoteWrite.PromPb
             labels.Add(new Label(name, value));
         }
 
+        public void SetLabels(List<Label> labels)
+        {
+            this.labels = labels;
+        }
+
         public void AddSample(long timestamp, double value)
         {
             samples.Add(new Sample(timestamp, value));

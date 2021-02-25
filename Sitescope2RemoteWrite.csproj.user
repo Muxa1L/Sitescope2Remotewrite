@@ -4,7 +4,7 @@
     <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup>
-    <ActiveDebugProfile>Docker</ActiveDebugProfile>
+    <ActiveDebugProfile>Sitescope2RemoteWrite</ActiveDebugProfile>
     <NameOfLastUsedPublishProfile>registry.hub.docker.com_muxa1l</NameOfLastUsedPublishProfile>
   </PropertyGroup>
 </Project>
