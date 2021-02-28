@@ -41,6 +41,7 @@ namespace Sitescope2RemoteWrite.Queueing
 
         public void EnqueueList(List<TimeSeries> tsList)
         {
+            
             foreach (var timeSerie in tsList)
             {
                 this.Enqueue(timeSerie);
@@ -49,6 +50,7 @@ namespace Sitescope2RemoteWrite.Queueing
 
         public void Enqueue(TimeSeries workItem)
         {
+            SpinWait.SpinUntil(() => { return _workItems.Count < 10000; });
             if (workItem == null)
             {
                 throw new ArgumentNullException(nameof(workItem));

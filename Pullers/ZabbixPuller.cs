@@ -47,7 +47,6 @@ namespace Sitescope2RemoteWrite.Processing
         private readonly List<long> allowedTables = new List<long>();
         private BinlogClient client;
         private readonly ReplicationStateStorage replStateStorage;
-        private ZabbixDictionary metricDict;
 
         public ZabbixPuller(IServiceProvider services, ILogger<ZabbixPuller> logger, IZabbixMetricQueue zabbixMetric, IConfiguration configuration, ReplicationStateStorage replicationState)
         {
@@ -55,7 +54,6 @@ namespace Sitescope2RemoteWrite.Processing
             replStateStorage = replicationState;
             metricQueue = zabbixMetric;
             zpullConfig = configuration.GetSection("zabbix");
-            metricDict = new ZabbixDictionary(zpullConfig);
             var lastState = replStateStorage.GetLastState();
 
             client = new BinlogClient(options =>
@@ -76,7 +74,7 @@ namespace Sitescope2RemoteWrite.Processing
                     options.Binlog = BinlogOptions.FromStart();
                 }
                 ///TODO remove this before release
-                //options.Binlog = BinlogOptions.FromStart();
+                options.Binlog = BinlogOptions.FromStart();
                 /*if (lastState != null)
                 {
                     if (!String.IsNullOrEmpty(lastState.filename))
@@ -146,7 +144,7 @@ namespace Sitescope2RemoteWrite.Processing
                             }
                         }
                     }
-                        ProcessMonitors();
+                    //ProcessMonitors();
                 }
             }
         }
@@ -156,44 +154,6 @@ namespace Sitescope2RemoteWrite.Processing
             
             //var timeSeries = RegexProcess.ProcessCounters(baseTS, monitor);
             //timeSeriesQueue.EnqueueList(timeSeries);
-        }
-
-        private class ZabbixDictionary {
-
-            private string connString;
-            private MySqlConnection sqlConnection;
-
-            public ZabbixDictionary(IConfiguration config)
-            {
-                var connStrBuild = new MySqlConnectionStringBuilder
-                {
-                    Port = config.GetValue<uint>("port"),
-                    Server = config.GetValue<string>("hostname"),
-                    UserID = config.GetValue<string>("username"),
-                    Password = config.GetValue<string>("password"),
-                    Database = config.GetValue<string>("database"),
-                };
-                connString = connStrBuild.ConnectionString;
-            }
-
-            private MySqlConnection GetConnection()
-            {
-                if (sqlConnection == null)
-                {
-                    sqlConnection = new MySqlConnection(connString);
-                    sqlConnection.Open();
-                }
-                else
-                {
-                    sqlConnection.Ping();
-                    if (sqlConnection.State != System.Data.ConnectionState.Open)
-                    {
-                        sqlConnection = new MySqlConnection(connString);
-                        sqlConnection.Open();
-                    }
-                }
-                return sqlConnection;
-            }
         }
     }
 

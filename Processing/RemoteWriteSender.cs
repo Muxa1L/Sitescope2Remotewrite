@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
 using Sitescope2RemoteWrite.Helpers;
 using Sitescope2RemoteWrite.PromPb;
 using Sitescope2RemoteWrite.Queueing;
@@ -40,12 +41,14 @@ namespace Sitescope2RemoteWrite.Processing
         private readonly IConfiguration _remoteWriteConfig;
         private readonly IHttpClientFactory _clientFactory;
         private readonly ITimeSeriesQueue _timeSeriesQueue;
+        private readonly ConcurrentQueue<WriteRequest> resendRequests = new ConcurrentQueue<WriteRequest>();
         private Timer _timer;
         private SemaphoreSlim _semaphore;
         private IServiceProvider Services { get; }
         private int inwait = 0;
         private string remoteWriteUrl = "";
         private int sendPeriod = 0;
+        private int chunks;
 
         public RemoteWriteSender(IServiceProvider services, ILogger<RemoteWriteSender> logger, IHttpClientFactory clientFactory, IConfiguration config, ITimeSeriesQueue timeSeriesQueue)
         {
@@ -57,6 +60,7 @@ namespace Sitescope2RemoteWrite.Processing
             remoteWriteUrl = _remoteWriteConfig.GetValue<string>("url");
             sendPeriod = _remoteWriteConfig.GetValue<int>("period", 1);
             var threads = _remoteWriteConfig.GetValue<int>("threads", 1);
+            chunks = _remoteWriteConfig.GetValue<int>("chunks", 100);
             _semaphore = new SemaphoreSlim(threads, threads);
             _timeSeriesQueue = timeSeriesQueue;
         }
@@ -82,24 +86,57 @@ namespace Sitescope2RemoteWrite.Processing
             if (_semaphore.Wait(100))
             {
                 Interlocked.Increment(ref inwait);
+                WriteRequest writeRequest = new WriteRequest();
+                var timeSeries = new Dictionary<string, TimeSeries>();
                 try
                 {
-                    WriteRequest writeRequest = new WriteRequest();
-                    TimeSeries timeSerie;
                     bool gotSomething = false;
                     var cancelToken = new CancellationTokenSource(TimeSpan.FromSeconds(sendPeriod)).Token;
                     do
                     {
-                        timeSerie = _timeSeriesQueue.Dequeue();
+                        TimeSeries timeSerie = _timeSeriesQueue.Dequeue();
                         if (timeSerie != null)
                         {
-                            writeRequest.AddTimeSerie(timeSerie);
+                            var hash = JsonConvert.SerializeObject(timeSerie.GetLabels());
+                            if (timeSeries.ContainsKey(hash)){
+                                foreach (var sample in timeSerie.GetSamples())
+                                    timeSeries[hash].AddSample(sample);
+                            }
+                            else
+                            {
+                                timeSeries[hash] = timeSerie;
+                            }
+                            //writeRequest.AddTimeSerie(timeSerie);
                             gotSomething = true;
                         }
                     }
-                    while (!cancelToken.IsCancellationRequested && timeSerie != null);
+                    while (!cancelToken.IsCancellationRequested && timeSeries.Count <= chunks);
+                    if (resendRequests.TryDequeue(out var toResend))
+                    {
+                        gotSomething = true;
+                        foreach (var resendts in toResend.GetTimeSeries())
+                        {
+                            var hash = JsonConvert.SerializeObject(resendts.GetLabels());
+                            if (timeSeries.ContainsKey(hash))
+                            {
+                                foreach (var sample in resendts.GetSamples())
+                                    timeSeries[hash].AddSample(sample);
+                            }
+                            else
+                            {
+                                timeSeries[hash] = resendts;
+                            }
+                        }
+                    }
+
                     if (gotSomething)
                     {
+                        foreach (var timeSerie in timeSeries)
+                        {
+                            timeSerie.Value.SortSamples();
+                            writeRequest.AddTimeSerie(timeSerie.Value);
+                            
+                        }
                         var client = _clientFactory.CreateClient();
                         //client.DefaultRequestHeaders.Clear();
                         using (var ms = new MemoryStream())
@@ -113,7 +150,7 @@ namespace Sitescope2RemoteWrite.Processing
                             request.Content.Headers.ContentEncoding.Clear();
                             request.Content.Headers.ContentEncoding.Add("snappy");
                             request.Headers.Add("X-Prometheus-Remote-Write-Version", "0.1.0");
-
+                            
                             var result = client.SendAsync(request);
                             result.Wait();
                         }                        
@@ -122,6 +159,7 @@ namespace Sitescope2RemoteWrite.Processing
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error while sending over remoteWrite");
+                    resendRequests.Enqueue(writeRequest);
                 }
                 finally
                 {

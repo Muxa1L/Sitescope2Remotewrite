@@ -19,6 +19,11 @@ namespace Sitescope2RemoteWrite.PromPb
         {
             this.timeseries.Add(timeserie);
         }
+
+        public List<TimeSeries> GetTimeSeries()
+        {
+            return timeseries;
+        }
     }
 
     [ProtoContract]
@@ -27,7 +32,7 @@ namespace Sitescope2RemoteWrite.PromPb
         [ProtoMember(1)]
         List<Label> labels;
         [ProtoMember(2)]
-        List<Sample> samples;
+        List<Sample>  samples;
 
         public TimeSeries()
         {
@@ -45,9 +50,24 @@ namespace Sitescope2RemoteWrite.PromPb
             this.labels = labels;
         }
 
+        public List<Label> GetLabels()
+        {
+            return labels;
+        }
+
         public void AddSample(long timestamp, double value)
         {
             samples.Add(new Sample(timestamp, value));
+        }
+
+        public void AddSample(Sample sample)
+        {
+            samples.Add(sample);
+        }
+
+        public List<Sample> GetSamples()
+        {
+            return samples;
         }
 
         public object Clone()
@@ -57,15 +77,20 @@ namespace Sitescope2RemoteWrite.PromPb
                 result.labels.Add((Label)label.Clone());
             return result;
         }
+
+        public void SortSamples()
+        {
+            samples.Sort((x, y) => (x.timestamp.CompareTo(y.timestamp)));
+        }
     }
 
     [ProtoContract]
     public class Sample
     {
         [ProtoMember(1)]
-        double value;
+        public double value;
         [ProtoMember(2)]
-        long timestamp;
+        public long timestamp;
 
         public Sample(long _timestamp, double _value)
         {
@@ -74,13 +99,14 @@ namespace Sitescope2RemoteWrite.PromPb
         }
     }
 
+    //[Serializable]
     [ProtoContract]
     public class Label : ICloneable
     {
         [ProtoMember(1)]
-        string name;
+        public string name;
         [ProtoMember(2)]
-        string value;
+        public string value;
 
         public Label(string _name, string _value)
         {
