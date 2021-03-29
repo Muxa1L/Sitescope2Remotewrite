@@ -102,7 +102,7 @@ namespace Sitescope2RemoteWrite.Processing
             //monitor.timestamp = DateTime.UtcNow.ToUnixTimeStamp() * 1000;
             var timeSeries = RegexProcess.ProcessCounters(baseTS, monitor);
             ///TODO ACHTUNG! ABSOLUTE PIZTETS!!!
-            timeSeriesQueue.EnqueueList(timeSeries);
+            //timeSeriesQueue.EnqueueList(timeSeries);
         }
     }
 }
