@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Sitescope2RemoteWrite.PromPb;
 using System;
 using System.Collections.Concurrent;
@@ -11,6 +12,8 @@ namespace Sitescope2RemoteWrite.Queueing
     public interface IZabbixMetricQueue
     {
         void Enqueue(Models.ZabbixMetric metric);
+
+        void EnqueueForce(Models.ZabbixMetric metric);
 
         Task<Models.ZabbixMetric> DequeueAsync(
             CancellationToken cancellationToken);
@@ -26,9 +29,12 @@ namespace Sitescope2RemoteWrite.Queueing
 
         private readonly int maxQueueSize;
 
-        public ZabbixMetricQueue(IConfiguration config)
+        private ILogger<ZabbixMetricQueue> _logger;
+
+        public ZabbixMetricQueue(IConfiguration config, ILogger<ZabbixMetricQueue> logger)
         {
-            maxQueueSize = config.GetValue<int>("zabbix:maxQueueSize", 10000);
+            _logger = logger;
+            maxQueueSize = config.GetValue<int>("zabbix:maxQueueSize", 20000);
         }
 
         public async Task<Models.ZabbixMetric> DequeueAsync(CancellationToken cancellationToken)
@@ -49,7 +55,26 @@ namespace Sitescope2RemoteWrite.Queueing
             {
                 throw new ArgumentNullException(nameof(workItem));
             }
+            var wasLocked = false;
+            if (_workItems.Count >= maxQueueSize)
+            {
+                _logger.LogInformation($"Waiting for queue cleanup. Currently {_workItems.Count} messages");
+                wasLocked = true;
+            }
+
             SpinWait.SpinUntil(() => { return _workItems.Count < maxQueueSize; });
+            if (wasLocked)
+                _logger.LogInformation($"Queue cleaned up. Currently {_workItems.Count} messages");
+            _workItems.Enqueue(workItem);
+            _signal.Release();
+        }
+
+        void IZabbixMetricQueue.EnqueueForce(Models.ZabbixMetric workItem)
+        {
+            if (workItem == null)
+            {
+                throw new ArgumentNullException(nameof(workItem));
+            }
             _workItems.Enqueue(workItem);
             _signal.Release();
         }

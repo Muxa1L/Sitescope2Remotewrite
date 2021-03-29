@@ -163,7 +163,7 @@ namespace Sitescope2RemoteWrite.Processing
                         cmd.Parameters.AddWithValue("gtid", lastState.gtid);
                         cmd.ExecuteNonQuery();
                         trx.Commit();
-                        _logger.LogInformation($"Save completed, data: {Newtonsoft.Json.JsonConvert.SerializeObject(lastState)}");
+                        _logger.LogDebug($"Save completed, data: {Newtonsoft.Json.JsonConvert.SerializeObject(lastState)}");
                     }
                 }
                 catch (Exception ex)

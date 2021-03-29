@@ -99,7 +99,7 @@ namespace Sitescope2RemoteWrite.PromPb
         }
     }
 
-    //[Serializable]
+    [Serializable]
     [ProtoContract]
     public class Label : ICloneable
     {

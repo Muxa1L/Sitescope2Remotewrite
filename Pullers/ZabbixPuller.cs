@@ -47,6 +47,7 @@ namespace Sitescope2RemoteWrite.Processing
         private readonly List<long> allowedTables = new List<long>();
         private BinlogClient client;
         private readonly ReplicationStateStorage replStateStorage;
+        private bool startFromFirst = false;
 
         public ZabbixPuller(IServiceProvider services, ILogger<ZabbixPuller> logger, IZabbixMetricQueue zabbixMetric, IConfiguration configuration, ReplicationStateStorage replicationState)
         {
@@ -54,45 +55,7 @@ namespace Sitescope2RemoteWrite.Processing
             replStateStorage = replicationState;
             metricQueue = zabbixMetric;
             zpullConfig = configuration.GetSection("zabbix");
-            var lastState = replStateStorage.GetLastState();
-
-            client = new BinlogClient(options =>
-            {
-                options.Hostname = zpullConfig.GetValue<string>("hostname");
-                options.Port = zpullConfig.GetValue<int>("port");
-                options.Username = zpullConfig.GetValue<string>("username");
-                options.Password = zpullConfig.GetValue<string>("password");
-                options.SslMode = SslMode.DISABLED;
-                options.HeartbeatInterval = TimeSpan.FromSeconds(30);
-                options.Blocking = true;
-                if (!String.IsNullOrEmpty(lastState?.filename))
-                {
-                    options.Binlog = BinlogOptions.FromPosition(lastState.filename, lastState.position);
-                }
-                else
-                {
-                    options.Binlog = BinlogOptions.FromStart();
-                }
-                ///TODO remove this before release
-                options.Binlog = BinlogOptions.FromStart();
-                /*if (lastState != null)
-                {
-                    if (!String.IsNullOrEmpty(lastState.filename))
-                    {
-                        options.Binlog = BinlogOptions.FromPosition(lastState.filename, lastState.position);
-                    }
-                    else
-                    {
-                        options.Binlog = BinlogOptions.FromStart();
-                    }
-                }
-                else
-                {
-                    options.Binlog = BinlogOptions.FromStart();
-                }*/
-                //options.Binlog = BinlogOptions.FromPosition("mysql-bin.000008", 195);
-                //options.Binlog = BinlogOptions.FromStart();
-            });
+            
             
         }
 
@@ -102,7 +65,61 @@ namespace Sitescope2RemoteWrite.Processing
             _logger.LogInformation(
                 "Zabbix puller started"
             );
-            await DoWork(stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var lastState = replStateStorage.GetLastState();
+
+
+                    client = new BinlogClient(options =>
+                    {
+                        options.Hostname = zpullConfig.GetValue<string>("hostname");
+                        options.Port = zpullConfig.GetValue<int>("port");
+                        options.Username = zpullConfig.GetValue<string>("username");
+                        options.Password = zpullConfig.GetValue<string>("password");
+                        options.SslMode = SslMode.DISABLED;
+                        options.HeartbeatInterval = TimeSpan.FromSeconds(30);
+                        options.Blocking = true;
+                        if (!String.IsNullOrEmpty(lastState?.filename))
+                        {
+                            options.Binlog = BinlogOptions.FromPosition(lastState.filename, lastState.position);
+                        }
+                        else
+                        {
+                            options.Binlog = BinlogOptions.FromStart();
+                        }
+                        if (startFromFirst)
+                        {
+                            options.Binlog = BinlogOptions.FromStart();
+                            startFromFirst = false;
+                        }
+                            
+
+                    });
+                    await DoWork(stoppingToken);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    if (ex.Message.Contains("ErrorCode: 1236"))
+                    {
+                        startFromFirst = true;
+                        _logger.LogWarning("Starting replication from first file");
+                    }
+                    else
+                    {
+                        _logger.LogError(ex, "Error while pulling from binlog");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error while pulling from binlog");
+                }
+            }
+            
+            _logger.LogInformation(
+                "Zabbix puller stopped"
+            );
         }
 
         private async Task DoWork(CancellationToken stoppingToken)
@@ -110,12 +127,13 @@ namespace Sitescope2RemoteWrite.Processing
             await foreach (var binlogEvent in client.Replicate(stoppingToken))
             {
                 //gtid = client.State.GtidState.ToString(),
-                replStateStorage.SaveState(client.State.Filename, client.State.Position, null);
+                
                 //Console.WriteLine($"{state.Filename}: {state.Position}");
                 //state.GtidState
 
                 if (binlogEvent is TableMapEvent tableMap)
                 {
+                    replStateStorage.SaveState(client.State.Filename, client.State.Position, null);
                     if (tableMap.TableName == "history" || tableMap.TableName == "history_uint")
                     {
                         if (!allowedTables.Contains(tableMap.TableId))

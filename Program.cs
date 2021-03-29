@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Sitescope2RemoteWrite.Processing;
 using Sitescope2RemoteWrite.Queueing;
+using Sitescope2RemoteWrite.Storage;
 
 namespace Sitescope2RemoteWrite
 {
@@ -21,6 +22,7 @@ namespace Sitescope2RemoteWrite
                 })
                 .ConfigureServices(services =>
                 {
+                    services.AddSingleton<ILabelStorage, LabelStorage>();
                     services.AddHostedService<XmlProcessor>();
                     services.AddHostedService<MonitorProcessor>();
                     services.AddHostedService<RemoteWriteSender>();
@@ -32,6 +34,7 @@ namespace Sitescope2RemoteWrite
                     services.AddSingleton<IMonitorQueue, MonitorQueue>();
                     services.AddSingleton<ITimeSeriesQueue, TimeSeriesQueue>();
                     services.AddSingleton<IDebugQueue, DebugQueue>();
+                    
 
                     services.AddSingleton<ReplicationStateStorage>();
                     services.AddHostedService(sp => sp.GetRequiredService<ReplicationStateStorage>());
