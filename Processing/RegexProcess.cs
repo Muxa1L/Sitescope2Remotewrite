@@ -40,7 +40,7 @@ namespace Sitescope2RemoteWrite.Processing
         private readonly IFormatProvider culture = new System.Globalization.CultureInfo("en-US");
         private readonly List<PathRegexRule> PathRegexps;
         private readonly List<CounterRegexRule> CounterRegexps;
-        private readonly Regex DoubleRegexp = new Regex("[\\d.]+", RegexOptions.Compiled);
+        private readonly Regex DoubleRegexp = new Regex("-?[\\d.]+", RegexOptions.Compiled);
         public RegexProcess (IConfiguration config)
         {
             PathRegexps = new List<PathRegexRule>();
