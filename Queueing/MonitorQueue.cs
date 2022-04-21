@@ -10,7 +10,7 @@ namespace Sitescope2RemoteWrite.Queueing
     public interface IMonitorQueue
     {
         void EnqueueMonitor(Models.Monitor monitor);
-
+        int Length();
         Task<Models.Monitor> DequeueAsync(
             CancellationToken cancellationToken);
     }
@@ -28,6 +28,10 @@ namespace Sitescope2RemoteWrite.Queueing
             return workItem;
         }
 
+        public int Length()
+        {
+            return _workItems.Count;
+        }
 
         void IMonitorQueue.EnqueueMonitor(Models.Monitor workItem)
         {

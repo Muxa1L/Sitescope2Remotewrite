@@ -96,12 +96,9 @@ namespace Sitescope2RemoteWrite.Processing
             //var labels = _labelStorage.GetLabels(metric.itemId);
             if (_labelStorage.HasLabels(metric.itemId))
             {
-                var ts = new ShortTimeserie()
-                {
-                    id = metric.itemId,
-                    time = metric.time,
-                    value = metric.value
-                };
+                var ts = new TimeSeries();
+                ts.SetLabels(_labelStorage.GetLabels(metric.itemId));
+                ts.AddSample(metric.time, metric.value);
                 tsQueue.Enqueue(ts);
             }
             else

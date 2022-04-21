@@ -71,7 +71,7 @@ namespace Sitescope2RemoteWrite.Processing
             }
         }
         
-        private void ProcessDocuments(XDocument xml, IMonitorQueue monitorQueue)
+        public void ProcessDocuments(XDocument xml, IMonitorQueue monitorQueue)
         {
             var source = xml.Element("performanceMonitors").Attribute("collectorHost").Value.ToLower();
             var monitors = xml.Descendants("monitor");

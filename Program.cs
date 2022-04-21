@@ -19,25 +19,6 @@ namespace Sitescope2RemoteWrite
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                })
-                .ConfigureServices(services =>
-                {
-                    services.AddSingleton<ILabelStorage, LabelStorage>();
-                    services.AddHostedService<XmlProcessor>();
-                    services.AddHostedService<MonitorProcessor>();
-                    services.AddHostedService<RemoteWriteSender>();
-                    services.AddHostedService<ZabbixPuller>();
-                    services.AddHostedService<ZabbixMetricProcessor>();
-
-                    services.AddSingleton<IXmlTaskQueue, XmlTaskQueue>();
-                    services.AddSingleton<IZabbixMetricQueue, ZabbixMetricQueue>();
-                    services.AddSingleton<IMonitorQueue, MonitorQueue>();
-                    services.AddSingleton<ITimeSeriesQueue, TimeSeriesQueue>();
-                    services.AddSingleton<IDebugQueue, DebugQueue>();
-                    
-
-                    services.AddSingleton<ReplicationStateStorage>();
-                    services.AddHostedService(sp => sp.GetRequiredService<ReplicationStateStorage>());
                 });
     }
 }

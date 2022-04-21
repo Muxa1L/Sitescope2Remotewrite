@@ -14,7 +14,7 @@ namespace Sitescope2RemoteWrite.Processing
     {
         //public string name;
         public Regex regex;
-        public Dictionary<string, string> defaults;
+        public Dictionary<string, string> defaults = new Dictionary<string, string>();
         public PathRegexRule(string regex, string defaults)
         {
             //this.defaults = new Dictionary<string, string>();
@@ -102,16 +102,12 @@ namespace Sitescope2RemoteWrite.Processing
             var matchedCounters = new List<string>();
             foreach (var cntrRule in CounterRegexps)
             {
-                bool monitorName = false;
-                bool counterName = false;
                 if (cntrRule.Monitor != null)
                 {
-                    if (cntrRule.Monitor.Match(monitor.name).Success)
-                        monitorName = true;
-                    else
+                    if (!cntrRule.Monitor.Match(monitor.name).Success)
                         continue;
                 }
-                if (cntrRule.Counter != null)
+                if (cntrRule.Counter == null)
                     continue;
 
                 foreach (var counter in monitor.Counters)
@@ -133,9 +129,9 @@ namespace Sitescope2RemoteWrite.Processing
                                 for (int i = 1; i < valueMatch.Groups.Count; i++)
                                 {
                                     var group = valueMatch.Groups[i];
-                                    if (group.Name.Contains("__name__"))
+                                    if (group.Name.Contains("metric_name"))
                                     {
-                                        name = group.Name.Replace("__name__", group.Value);
+                                        name = group.Name.Replace("metric_name", group.Value);
                                     }
                                     else if (group.Name == "value")
                                     {

@@ -32,24 +32,22 @@ namespace Sitescope2RemoteWrite.Processing
     public class MonitorProcessor : BackgroundService
     {
         private readonly ILogger<MonitorProcessor> _logger;
-        private readonly IConfiguration processingConfig;
-        public IServiceProvider Services { get; }
-        private readonly RegexProcess RegexProcess;
+        private readonly IConfiguration _processingConfig;
+        private readonly IMonitorQueue _monitorQueue;
+        private readonly ITimeSeriesQueue _timeSeriesQueue;
+        private readonly RegexProcess _regexProcess;
         private readonly IDebugQueue debugQueue;
 
-        public MonitorProcessor(IServiceProvider services, ILogger<MonitorProcessor> logger, IDebugQueue debugQueue)
+        public MonitorProcessor(IConfiguration config, ILogger<MonitorProcessor> logger, IDebugQueue debugQueue, ITimeSeriesQueue timeSeriesQueue, IMonitorQueue monitorQueue)
         {
             _logger = logger;
-            Services = services;
+            _monitorQueue = monitorQueue;
+            _timeSeriesQueue = timeSeriesQueue;
+            //Services = services;
             this.debugQueue = debugQueue;
-            using (var scope = Services.CreateScope())
-            {
-                //PathRegexps = new List<Regex>();
-                var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-                processingConfig = config.GetSection("Processing");
-                RegexProcess = new RegexProcess(processingConfig);
-                
-            }
+            _processingConfig = config.GetSection("Processing");
+            _regexProcess = new RegexProcess(_processingConfig);
+            
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -63,19 +61,12 @@ namespace Sitescope2RemoteWrite.Processing
 
         private async Task DoWork(CancellationToken stoppingToken)
         {
-            IMonitorQueue monitorQueue;
-            ITimeSeriesQueue timeSeriesQueue;
-            using (var scope = Services.CreateScope())
-            {
-                monitorQueue = scope.ServiceProvider.GetRequiredService<IMonitorQueue>();
-                timeSeriesQueue = scope.ServiceProvider.GetRequiredService<ITimeSeriesQueue>();
-            }
             while (!stoppingToken.IsCancellationRequested)
             {
-                var monitor = await monitorQueue.DequeueAsync(stoppingToken);
+                var monitor = await _monitorQueue.DequeueAsync(stoppingToken);
                 try
                 {
-                    ProcessMonitors(monitor, timeSeriesQueue);
+                    ProcessMonitors(monitor, _timeSeriesQueue);
                 }
 
                 catch (Exception ex)
@@ -86,7 +77,7 @@ namespace Sitescope2RemoteWrite.Processing
             }
         }
 
-        private void ProcessMonitors(Models.Monitor monitor, ITimeSeriesQueue timeSeriesQueue)
+        public void ProcessMonitors(Models.Monitor monitor, ITimeSeriesQueue timeSeriesQueue)
         {
             var baseTS = new TimeSeries();
             baseTS.AddLabel("path", monitor.path);
@@ -94,15 +85,14 @@ namespace Sitescope2RemoteWrite.Processing
             baseTS.AddLabel("type", monitor.type);
             baseTS.AddLabel("target", monitor.target.ToLower());
             baseTS.AddLabel("targetip", monitor.targetIP.ToLower());
-            var pathFound = RegexProcess.AddLabelsFromPath(monitor.path, ref baseTS);
+            var pathFound = _regexProcess.AddLabelsFromPath(monitor.path, ref baseTS);
             if (!pathFound)
             {
                 debugQueue.AddPath(monitor.path);
             }
             //monitor.timestamp = DateTime.UtcNow.ToUnixTimeStamp() * 1000;
-            var timeSeries = RegexProcess.ProcessCounters(baseTS, monitor);
-            ///TODO ACHTUNG! ABSOLUTE PIZTETS!!!
-            //timeSeriesQueue.EnqueueList(timeSeries);
+            var timeSeries = _regexProcess.ProcessCounters(baseTS, monitor);
+            timeSeriesQueue.EnqueueList(timeSeries);
         }
     }
 }

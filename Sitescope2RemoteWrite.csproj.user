@@ -4,7 +4,7 @@
     <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup>
-    <ActiveDebugProfile>Sitescope2RemoteWrite</ActiveDebugProfile>
-    <NameOfLastUsedPublishProfile>registry.hub.docker.com_muxa1l</NameOfLastUsedPublishProfile>
+    <ActiveDebugProfile>Docker</ActiveDebugProfile>
+    <NameOfLastUsedPublishProfile>C:\Users\mimih.DESKTOP-F5SNMQS\source\repos\Sitescope2Remotewrite\Properties\PublishProfiles\registry.hub.docker.com_muxa1l.pubxml</NameOfLastUsedPublishProfile>
   </PropertyGroup>
 </Project>

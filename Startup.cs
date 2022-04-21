@@ -5,6 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prometheus;
+using Sitescope2RemoteWrite.Storage;
+using Sitescope2RemoteWrite.Processing;
+using Sitescope2RemoteWrite.Queueing;
 
 namespace Sitescope2RemoteWrite
 {
@@ -22,7 +25,32 @@ namespace Sitescope2RemoteWrite
         {
             services.AddControllers(options => options.InputFormatters.Insert(0, new XDocumentInputFormatter()));
             services.AddHttpClient();
-                    //.UseHttpClientMetrics();
+
+            services.AddHostedService<RemoteWriteSender>();
+            services.AddSingleton<IDebugQueue, DebugQueue>();
+
+            if (Configuration.GetSection("zabbix").Exists())
+            {
+                services.AddSingleton<ILabelStorage, LabelStorage>();
+                services.AddSingleton<IZabbixMetricQueue, ZabbixMetricQueue>();
+                services.AddHostedService<ZabbixPuller>();
+                services.AddHostedService<ZabbixMetricProcessor>();
+                services.AddSingleton<ReplicationStateStorage>();
+                services.AddHostedService(sp => sp.GetRequiredService<ReplicationStateStorage>());
+            }
+            else
+            {
+                services.AddHostedService<XmlProcessor>();
+                services.AddHostedService<MonitorProcessor>();
+                services.AddSingleton<IXmlTaskQueue, XmlTaskQueue>();
+                services.AddSingleton<IMonitorQueue, MonitorQueue>();
+                services.AddSingleton<ITimeSeriesQueue, TimeSeriesQueue>();
+            }
+            
+            
+
+
+            //.UseHttpClientMetrics();
             //httpClientBuilder.UseHttpClientMetrics();
             //services.AddApplicationInsightsTelemetry();
         }

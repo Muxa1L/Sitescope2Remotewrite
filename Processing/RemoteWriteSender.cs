@@ -42,22 +42,18 @@ namespace Sitescope2RemoteWrite.Processing
         private readonly IConfiguration _remoteWriteConfig;
         private readonly IHttpClientFactory _clientFactory;
         private readonly ITimeSeriesQueue _timeSeriesQueue;
-        private readonly ILabelStorage _labelStorage;
         private readonly ConcurrentQueue<WriteRequest> resendRequests = new ConcurrentQueue<WriteRequest>();
         private Timer _timer;
-        private SemaphoreSlim _semaphore;
-        private IServiceProvider Services { get; }
+        private SemaphoreSlim _semaphore; 
         private int inwait = 0;
         private string remoteWriteUrl = "";
         private int sendPeriod = 0;
         private int chunks;
 
-        public RemoteWriteSender(IServiceProvider services, ILogger<RemoteWriteSender> logger, IHttpClientFactory clientFactory, IConfiguration config, ITimeSeriesQueue timeSeriesQueue, ILabelStorage labelStorage)
+        public RemoteWriteSender(ILogger<RemoteWriteSender> logger, IHttpClientFactory clientFactory, IConfiguration config, ITimeSeriesQueue timeSeriesQueue)
         {
             _clientFactory = clientFactory;
-            _logger = logger;
-            _labelStorage = labelStorage;            
-            Services = services;
+            _logger = logger;     
             _remoteWriteConfig = config.GetSection("RemoteWrite");
             remoteWriteUrl = _remoteWriteConfig.GetValue<string>("url");
             sendPeriod = _remoteWriteConfig.GetValue<int>("period", 1);
@@ -89,14 +85,13 @@ namespace Sitescope2RemoteWrite.Processing
             {
                 Interlocked.Increment(ref inwait);
                 WriteRequest writeRequest = new WriteRequest();
-                var timeSeries = new Dictionary<long, TimeSeries>();
                 try
                 {
-                    bool gotSomething = false;
                     var cancelToken = new CancellationTokenSource(TimeSpan.FromSeconds(sendPeriod)).Token;
+                    int countTs = 0;
                     do
                     {
-                        ShortTimeserie timeSerie = null;
+                        TimeSeries timeSerie = null;
                         try
                         {
                             timeSerie = await _timeSeriesQueue.DequeueAsync(cancelToken);
@@ -104,24 +99,11 @@ namespace Sitescope2RemoteWrite.Processing
                         catch (Exception) { }
                         if (timeSerie != null)
                         {
-                            if (timeSeries.ContainsKey(timeSerie.id)){
-                                timeSeries[timeSerie.id].AddSample(timeSerie.time, timeSerie.value);
-                            }
-                            else
-                            {
-                                var newts = new TimeSeries();
-                                var labels = _labelStorage.GetLabels(timeSerie.id);
-                                if (labels.Count == 0)
-                                    continue;
-                                newts.SetLabels(labels);
-                                newts.AddSample(timeSerie.time, timeSerie.value);
-                                timeSeries[timeSerie.id] = newts;
-                            }
-                            //writeRequest.AddTimeSerie(timeSerie);
-                            gotSomething = true;
+                            writeRequest.AddTimeSerie(timeSerie);
+                            countTs++;
                         }
                     }
-                    while (!cancelToken.IsCancellationRequested && timeSeries.Count <= chunks);
+                    while (!cancelToken.IsCancellationRequested && countTs <= chunks);
                     if (resendRequests.TryDequeue(out var toResend))
                     {
                         var client = _clientFactory.CreateClient();
@@ -143,13 +125,8 @@ namespace Sitescope2RemoteWrite.Processing
                         }
                     }
 
-                    if (gotSomething)
+                    if (countTs > 0)
                     {
-                        foreach (var timeSerie in timeSeries)
-                        {
-                            //timeSerie.Value.SortSamples();
-                            writeRequest.AddTimeSerie(timeSerie.Value);
-                        }
                         var client = _clientFactory.CreateClient();
                         //client.DefaultRequestHeaders.Clear();
                         using (var ms = new MemoryStream())

@@ -9,31 +9,27 @@ using System.Xml.Linq;
 
 namespace Sitescope2RemoteWrite.Queueing
 {
-    public class ShortTimeserie
-    {
-        public long id;
-        public long time;
-        public double value;
-    }
 
     public interface ITimeSeriesQueue
     {
-        void Enqueue(ShortTimeserie timeSeries);
+        void Enqueue(TimeSeries timeSeries);
 
-        void EnqueueForce(ShortTimeserie timeSeries);
+        void EnqueueForce(TimeSeries timeSeries);
 
-        void EnqueueList(List<ShortTimeserie> tsList);
+        void EnqueueList(List<TimeSeries> tsList);
 
-        Task<ShortTimeserie> DequeueAsync(
+        Task<TimeSeries> DequeueAsync(
             CancellationToken cancellationToken);
 
-        //ShortTimeserie Dequeue();
+        int Length();
+
+        //TimeSeries Dequeue();
     }
 
     public class TimeSeriesQueue : ITimeSeriesQueue
     {
-        private readonly ConcurrentQueue<ShortTimeserie> _workItems =
-            new ConcurrentQueue<ShortTimeserie>();
+        private readonly ConcurrentQueue<TimeSeries> _workItems =
+            new ConcurrentQueue<TimeSeries>();
         private readonly SemaphoreSlim _signal = new SemaphoreSlim(0);
 
         ILogger<TimeSeriesQueue> _logger;
@@ -43,20 +39,20 @@ namespace Sitescope2RemoteWrite.Queueing
             _logger = logger;
         }
 
-        public async Task<ShortTimeserie> DequeueAsync(CancellationToken cancellationToken)
+        public async Task<TimeSeries> DequeueAsync(CancellationToken cancellationToken)
         {
             await _signal.WaitAsync(cancellationToken);
             _workItems.TryDequeue(out var workItem);
             return workItem;
         }
 
-        /*public ShortTimeserie Dequeue()
+        /*public TimeSeries Dequeue()
         {
             _workItems.TryDequeue(out var workItem);
             return workItem;
         }*/
 
-        public void EnqueueList(List<ShortTimeserie> tsList)
+        public void EnqueueList(List<TimeSeries> tsList)
         {
             
             foreach (var timeSerie in tsList)
@@ -65,7 +61,7 @@ namespace Sitescope2RemoteWrite.Queueing
             }
         }
 
-        public void Enqueue(ShortTimeserie workItem)
+        public void Enqueue(TimeSeries workItem)
         {
             var wasLocked = false;
             if (_workItems.Count >= 400000)
@@ -85,7 +81,7 @@ namespace Sitescope2RemoteWrite.Queueing
             _signal.Release();
         }
 
-        public void EnqueueForce(ShortTimeserie workItem)
+        public void EnqueueForce(TimeSeries workItem)
         {
             if (workItem == null)
             {
@@ -95,5 +91,9 @@ namespace Sitescope2RemoteWrite.Queueing
             _signal.Release();
         }
 
+        public int Length()
+        {
+            return _workItems.Count;
+        }
     }
 }
