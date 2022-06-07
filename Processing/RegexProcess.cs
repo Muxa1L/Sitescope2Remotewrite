@@ -116,10 +116,16 @@ namespace Sitescope2RemoteWrite.Processing
                     if (cntrMatch.Success)
                     {
                         matchedCounters.Add(counter.name);
+                        MatchCollection valueMatches;
                         if (cntrRule.Value == null)
-                            continue;
+                        {
+                            valueMatches = Regex.Matches(counter.value, ".*");
+                        }
+                        else
+                        {
+                            valueMatches = cntrRule.Value.Matches(counter.value);
+                        }
 
-                        var valueMatches = cntrRule.Value.Matches(counter.value);
                         foreach (Match valueMatch in valueMatches)
                         {
                             string name = counter.name;
