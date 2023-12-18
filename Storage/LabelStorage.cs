@@ -151,10 +151,10 @@ namespace Sitescope2RemoteWrite.Storage
             cmd.CommandTimeout = 7200;
             
             if (labelDict.IsEmpty())
-                cmd.CommandText = zbxVersion >= 4 ? selectAll_v4 : selectAll;
+                cmd.CommandText = zbxVersion >= 6 ? selectAll_v6 : selectAll;
             else
             {
-                cmd.CommandText = zbxVersion >= 4 ? selectById_v4 : selectById;
+                cmd.CommandText = zbxVersion >= 6 ? selectById_v6 : selectById;
                 cmd.CommandText = String.Format(cmd.CommandText, string.Join(',', ids));
                 //cmd.Parameters.AddWithValue("ids", );
             }
