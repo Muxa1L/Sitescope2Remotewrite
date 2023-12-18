@@ -28,7 +28,7 @@ namespace Sitescope2RemoteWrite
 
             services.AddHostedService<RemoteWriteSender>();
             services.AddSingleton<IDebugQueue, DebugQueue>();
-
+             services.AddSingleton<ITimeSeriesQueue, TimeSeriesQueue>();
             if (Configuration.GetSection("zabbix").Exists())
             {
                 services.AddSingleton<ILabelStorage, LabelStorage>();
