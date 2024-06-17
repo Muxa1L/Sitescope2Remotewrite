@@ -164,6 +164,7 @@ namespace Sitescope2RemoteWrite.Storage
                 {
                     var id = reader.GetInt64(0);
                     var labels = new List<Label>();
+                    labels.Add(new Label("itemid", id.ToString()));
                     for (int i = 1; i < reader.FieldCount; i++)
                     {
                         if (!reader.IsDBNull(i))
