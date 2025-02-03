@@ -298,12 +298,12 @@ prx.host proxy_host, prx.name proxy_name, hgrps.groups host_groups, hiface.dns d
 FROM items itm
 LEFT JOIN hosts hst ON hst.hostid = itm.hostid 
 LEFT JOIN hosts prx ON hst.proxy_hostid = prx.hostid
-LEFT JOIN (SELECT hostid, group_concat(name separator';') ""groups"" FROM zabbix.hosts_groups hgr JOIN zabbix.hstgrp gr ON hgr.groupid = gr.groupid WHERE gr.internal != 1 GROUP BY hostid) hgrps
+LEFT JOIN (SELECT hostid, group_concat(name ORDER BY name ASC separator';') ""groups"" FROM zabbix.hosts_groups hgr JOIN zabbix.hstgrp gr ON hgr.groupid = gr.groupid WHERE gr.internal != 1 GROUP BY hostid) hgrps
   ON hgrps.hostid = itm.hostid
-LEFT JOIN(SELECT hostid, group_concat(dns separator';') dns, group_concat(ip separator';') ip FROM zabbix.interface GROUP BY hostid ) hiface
+LEFT JOIN(SELECT hostid, group_concat(dns ORDER BY dns ASC separator';') dns, group_concat(ip ORDER BY ip ASC separator';') ip FROM zabbix.interface GROUP BY hostid ) hiface
  ON hiface.hostid = itm.hostid
 LEFT JOIN(SELECT itemid tmplid, hosts.name name FROM items JOIN hosts ON hosts.hostid = items.hostid) tmpl ON tmpl.tmplid = itm.templateid
-LEFT JOIN (SELECT itemid appitemid, GROUP_CONCAT(value separator ';') name
+LEFT JOIN (SELECT itemid appitemid, GROUP_CONCAT(value ORDER BY value ASC separator ';') name
   FROM zabbix.item_tag itmapp
 ) apps ON apps.appitemid = itm.itemid
 WHERE value_type IN(0, 3) AND itemid IN ({0})";
@@ -314,12 +314,12 @@ prx.host proxy_host, prx.name proxy_name, hgrps.groups host_groups, hiface.dns d
 FROM items itm
 LEFT JOIN hosts hst ON hst.hostid = itm.hostid 
 LEFT JOIN hosts prx ON hst.proxy_hostid = prx.hostid
-LEFT JOIN (SELECT hostid, group_concat(name separator';') ""groups"" FROM zabbix.hosts_groups hgr JOIN zabbix.hstgrp gr ON hgr.groupid = gr.groupid WHERE gr.internal != 1 GROUP BY hostid) hgrps
+LEFT JOIN (SELECT hostid, group_concat(name ORDER BY name ASC separator';') ""groups"" FROM zabbix.hosts_groups hgr JOIN zabbix.hstgrp gr ON hgr.groupid = gr.groupid WHERE gr.internal != 1 GROUP BY hostid) hgrps
   ON hgrps.hostid = itm.hostid
-LEFT JOIN(SELECT hostid, group_concat(dns separator';') dns, group_concat(ip separator';') ip FROM zabbix.interface GROUP BY hostid ) hiface
+LEFT JOIN(SELECT hostid, group_concat(dns ORDER BY dns ASC separator';') dns, group_concat(ip ORDER BY ip ASC separator';') ip FROM zabbix.interface GROUP BY hostid ) hiface
  ON hiface.hostid = itm.hostid
 LEFT JOIN(SELECT itemid tmplid, hosts.name name FROM items JOIN hosts ON hosts.hostid = items.hostid) tmpl ON tmpl.tmplid = itm.templateid
-LEFT JOIN (SELECT itemid appitemid, GROUP_CONCAT(value separator ';') name
+LEFT JOIN (SELECT itemid appitemid, GROUP_CONCAT(value ORDER BY value ASC separator ';') name
   FROM zabbix.item_tag itmapp
 ) apps ON apps.appitemid = itm.itemid
 WHERE value_type IN(0, 3) AND itm.status = 0";
