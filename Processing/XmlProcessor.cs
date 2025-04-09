@@ -84,9 +84,11 @@ namespace Sitescope2RemoteWrite.Processing
                     name = monitor.Attribute("name").Value,
                     target = monitor.Attribute("target").Value,
                     targetIP = monitor.Attribute("targetIP").Value,
-                    timestamp = long.Parse(monitor.Attribute("time").Value),
+                    timestamp = RoundTimestamp(long.Parse(monitor.Attribute("time").Value)),
                     sourceTemplateName = monitor.Attribute("sourceTemplateName") == null ? "" : monitor.Attribute("sourceTemplateName").Value
                 };
+
+                //mon.timestamp = 
 
                 var counters = new List<Models.Counter>();
                 foreach (var metr in monitor.Elements())
@@ -101,6 +103,16 @@ namespace Sitescope2RemoteWrite.Processing
                 mon.Counters = counters;
                 monitorQueue.EnqueueMonitor(mon);
             }
+        }
+
+
+        public static long RoundTimestamp(long timestamp)
+        {
+            var ms = timestamp % (60 * 1000);
+            if (ms <= 30000)
+                return timestamp - ms;
+            else
+                return timestamp - ms + 60000;
         }
 
     }
