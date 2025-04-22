@@ -110,7 +110,7 @@ namespace Sitescope2RemoteWrite.Processing
                         //client.DefaultRequestHeaders.Clear();
                         using (var ms = new MemoryStream())
                         {
-                            ProtoBuf.Serializer.Serialize(ms, writeRequest);
+                            ProtoBuf.Serializer.Serialize(ms, toResend);
                             var serialized = ms.ToArray();
                             var compressed = IronSnappy.Snappy.Encode(serialized);
                             var request = new HttpRequestMessage(HttpMethod.Post, remoteWriteUrl);
