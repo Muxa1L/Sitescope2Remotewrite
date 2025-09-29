@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using MySql.Data.MySqlClient;
+using Npgsql;
 using Sitescope2RemoteWrite.Helpers;
 using Sitescope2RemoteWrite.PromPb;
 using Sitescope2RemoteWrite.Queueing;
@@ -15,7 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Sitescope2RemoteWrite.Processing
+namespace Sitescope2RemoteWrite.Storage
 {
     /*internal interface IXmlProcessor
     {
@@ -31,35 +31,28 @@ namespace Sitescope2RemoteWrite.Processing
     }*/
 
 
-    public class ReplicationState
+    public class ReplicationStateStoragePostgreSQL : IReplicationStateStorage
     {
-        public string filename;
-        public long position;
-        public string gtid;
-    }
-
-    public class ReplicationStateStorage : IHostedService // : IReplicationStateStorage
-    {
-        private readonly ILogger<ReplicationStateStorage> _logger;
+        private readonly ILogger<ReplicationStateStoragePostgreSQL> _logger;
         private readonly IConfiguration replStateConf;
         private readonly string connString;
         private readonly string stateTable;
-        private MySqlConnection sqlConnection;
+        private NpgsqlConnection sqlConnection;
 
         private int savePeriod = 10;
         private SemaphoreSlim _semaphore;
         private ReplicationState lastState;
         private Timer _timer;
 
-        public ReplicationStateStorage(ILogger<ReplicationStateStorage> logger, IConfiguration configuration)
+        public ReplicationStateStoragePostgreSQL(ILogger<ReplicationStateStoragePostgreSQL> logger, IConfiguration configuration)
         {
             _logger = logger;
             replStateConf = configuration.GetSection("zabbix");
-            var connStrBuild = new MySqlConnectionStringBuilder
+            var connStrBuild = new NpgsqlConnectionStringBuilder
             {
-                Port = replStateConf.GetValue<uint>("port"),
-                Server = replStateConf.GetValue<string>("hostname"),
-                UserID = replStateConf.GetValue<string>("username"),
+                Port = replStateConf.GetValue<int>("port"),
+                Host = replStateConf.GetValue<string>("hostname"),
+                Username = replStateConf.GetValue<string>("username"),
                 Password = replStateConf.GetValue<string>("password"),
                 Database = replStateConf.GetValue<string>("database"),
             };
@@ -119,19 +112,18 @@ namespace Sitescope2RemoteWrite.Processing
             };
         }
 
-        private MySqlConnection GetConnection()
+        private NpgsqlConnection GetConnection()
         {
             if (sqlConnection == null)
             {
-                sqlConnection = new MySqlConnection(connString);
+                sqlConnection = new NpgsqlConnection(connString);
                 sqlConnection.Open();
             }
             else
             {
-                sqlConnection.Ping();
                 if (sqlConnection.State != System.Data.ConnectionState.Open)
                 {
-                    sqlConnection = new MySqlConnection(connString);
+                    sqlConnection = new NpgsqlConnection(connString);
                     sqlConnection.Open();
                 }
             }

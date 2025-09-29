@@ -15,51 +15,16 @@ using System.Threading.Tasks;
 
 namespace Sitescope2RemoteWrite.Storage
 {
-    public interface ILabelStorage
-    {
-        public List<Label> GetLabels(long id);
-        public bool HasLabels(long id);
-        public bool QueueFull();
-    }
+    
 
-    public class LabelDict
-    {
-        private Dictionary<long, List<Label>> labels = new Dictionary<long, List<Label>>(6 * 1000 * 1000);
-
-        public bool IsEmpty()
-        {
-            return labels.Count == 0;
-        }
-
-        public bool Contains(long id)
-        {
-            return labels.ContainsKey(id);
-        }
-
-        public List<Label> GetLabels(long id)
-        {
-            /*if (!labels.ContainsKey(id))
-                return null;*/
-            if (!labels.ContainsKey(id))
-                return null;
-            return labels[id];
-        }
-
-        public void StoreLabels(long id, List<Label> obj)
-        {
-            labels[id] = obj;
-            return;
-        }
-    }
-
-    public class LabelStorage: ILabelStorage
+    public class LabelStorageMySQL: ILabelStorage
     {
         //private ConcurrentDictionary<long, List<Label>> labels = new ConcurrentDictionary<long, List<Label>>();
         private LabelDict labelDict;
         private HashSet<long> notKnown = new HashSet<long>();
         private Timer _getNotKnown;
         private SemaphoreSlim _semaphore;
-        private ILogger<LabelStorage> _logger;
+        private ILogger<LabelStorageMySQL> _logger;
         private int zbxVersion;
         private int maxNotKnown;
         private string connString;
@@ -67,7 +32,7 @@ namespace Sitescope2RemoteWrite.Storage
         private List<Regex> regexps = new List<Regex>();
         private Regex notDefinedRex = new Regex("(.*)\\[(.*)\\]", RegexOptions.Compiled);
 
-        public LabelStorage(IConfiguration config, ILogger<LabelStorage> logger)
+        public LabelStorageMySQL(IConfiguration config, ILogger<LabelStorageMySQL> logger)
         {
             labelDict = new LabelDict();
             var zbxConfig = config.GetSection("zabbix");
@@ -232,28 +197,13 @@ namespace Sitescope2RemoteWrite.Storage
         }
 
         public List<Label> GetLabels(long id)
-        {/*
-            if (labels.TryGetValue(id, out var value))
-            {
-                return value;
-            }
-            else
-            {
-                return null;
-            }*/
+        {
             return labelDict.GetLabels(id);
         }
 
         public bool HasLabels(long id)
         {
-            /*
-            if (!labels.ContainsKey(id))
-            {
-                lock (notKnown) {
-                    notKnown.Add(id);
-                }
-                return false;
-            }*/
+            
             if (!labelDict.Contains(id))
             {
                 lock (notKnown)

@@ -31,12 +31,26 @@ namespace Sitescope2RemoteWrite
              services.AddSingleton<ITimeSeriesQueue, TimeSeriesQueue>();
             if (Configuration.GetSection("zabbix").Exists())
             {
-                services.AddSingleton<ILabelStorage, LabelStorage>();
+                
                 services.AddSingleton<IZabbixMetricQueue, ZabbixMetricQueue>();
-                services.AddHostedService<ZabbixPuller>();
+                
                 services.AddHostedService<ZabbixMetricProcessor>();
-                services.AddSingleton<ReplicationStateStorage>();
-                services.AddHostedService(sp => sp.GetRequiredService<ReplicationStateStorage>());
+                switch (Configuration.GetValue<string>("zabbix:DbType"))
+                {
+                    case "postgresql":
+                        services.AddSingleton<ILabelStorage, LabelStoragePostgreSQL>();
+                        services.AddHostedService<ZabbixPullerPostgreSQL>();
+                        //services.AddSingleton<ReplicationStateStoragePostgreSQL>();
+                        //services.AddHostedService(sp => sp.GetRequiredService<ReplicationStateStoragePostgreSQL>());
+                        break;
+                    case "mysql":
+                        services.AddSingleton<ILabelStorage, LabelStorageMySQL>();
+                        services.AddHostedService<ZabbixPullerMySQL>();
+                        services.AddSingleton<ReplicationStateStorageMySQL>();
+                        services.AddHostedService(sp => sp.GetRequiredService<ReplicationStateStorageMySQL>());
+                        break;
+                }
+               
             }
             else
             {

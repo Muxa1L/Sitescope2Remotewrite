@@ -12,6 +12,7 @@ using Sitescope2RemoteWrite.Helpers;
 using Sitescope2RemoteWrite.Models;
 using Sitescope2RemoteWrite.PromPb;
 using Sitescope2RemoteWrite.Queueing;
+using Sitescope2RemoteWrite.Storage;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -36,9 +37,9 @@ namespace Sitescope2RemoteWrite.Processing
         }
     }*/
 
-    public class ZabbixPuller : BackgroundService
+    public class ZabbixPullerMySQL : BackgroundService
     {
-        private readonly ILogger<ZabbixPuller> _logger;
+        private readonly ILogger<ZabbixPullerMySQL> _logger;
         
         IZabbixMetricQueue metricQueue;
         private readonly IDebugQueue debugQueue;
@@ -46,17 +47,15 @@ namespace Sitescope2RemoteWrite.Processing
 
         private readonly List<long> allowedTables = new List<long>();
         private BinlogClient client;
-        private readonly ReplicationStateStorage replStateStorage;
+        private readonly IReplicationStateStorage replStateStorage;
         private bool startFromFirst = false;
 
-        public ZabbixPuller(IServiceProvider services, ILogger<ZabbixPuller> logger, IZabbixMetricQueue zabbixMetric, IConfiguration configuration, ReplicationStateStorage replicationState)
+        public ZabbixPullerMySQL(IServiceProvider services, ILogger<ZabbixPullerMySQL> logger, IZabbixMetricQueue zabbixMetric, IConfiguration configuration, IReplicationStateStorage replicationState)
         {
             _logger = logger;
             replStateStorage = replicationState;
             metricQueue = zabbixMetric;
             zpullConfig = configuration.GetSection("zabbix");
-            
-            
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
