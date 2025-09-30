@@ -54,6 +54,7 @@ namespace Sitescope2RemoteWrite.Processing
         //private readonly IReplicationStateStorage replStateStorage;
         private readonly string slotName;
         private readonly string publicationName;
+        private readonly bool useStreamingReplication;
         private bool startFromFirst = false;
         private PgOutputReplicationSlot slot;
         //private PhysicalReplicationSlot slot;
@@ -66,7 +67,7 @@ namespace Sitescope2RemoteWrite.Processing
             zpullConfig = configuration.GetSection("zabbix");
             slotName = zpullConfig.GetValue<string>("replSlot", "vmrepl");
             publicationName = zpullConfig.GetValue<string>("publication", "items");
-
+            useStreamingReplication = zpullConfig.GetValue<bool>("streaming", false);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -162,7 +163,13 @@ namespace Sitescope2RemoteWrite.Processing
             //{
             //    iter = client.StartReplication(slot, NpgsqlLogSequenceNumber.Invalid, stoppingToken, );
             //}
-            await foreach (var binlogEvent in client.StartReplication(slot, new PgOutputReplicationOptions(publicationName, 1), stoppingToken))
+            await foreach (var binlogEvent in 
+                client.StartReplication(
+                    slot, 
+                    new PgOutputReplicationOptions(publicationName, 1, streaming: useStreamingReplication), 
+                    stoppingToken
+                )
+            )
             {
                 //var test = new TestDecodingData();
                 //test.
@@ -185,7 +192,7 @@ namespace Sitescope2RemoteWrite.Processing
                         await enumerator.MoveNextAsync();
                         metricValue.itemId = long.Parse(await enumerator.Current.Get<string>());
                         await enumerator.MoveNextAsync();
-                        metricValue.time = long.Parse(await enumerator.Current.Get<string>());
+                        metricValue.time = long.Parse(await enumerator.Current.Get<string>()) * 1000;
                         await enumerator.MoveNextAsync();
                         metricValue.value = double.Parse(await enumerator.Current.Get<string>());
 
