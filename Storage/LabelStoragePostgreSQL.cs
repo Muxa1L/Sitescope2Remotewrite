@@ -114,9 +114,9 @@ namespace Sitescope2RemoteWrite.Storage
             var cmd = conn.CreateCommand();
             cmd.CommandTimeout = 7200;
 
-            //if (labelDict.IsEmpty())
-            //    cmd.CommandText = selectAll_v6;
-            //else
+            if (labelDict.IsEmpty())
+                cmd.CommandText = selectAll_v6;
+            else
             {
                 cmd.CommandText = selectById_v6;
                 cmd.CommandText = String.Format(cmd.CommandText, string.Join(',', ids));
