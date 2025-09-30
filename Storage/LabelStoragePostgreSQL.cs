@@ -44,7 +44,7 @@ namespace Sitescope2RemoteWrite.Storage
                 Username = zbxConfig.GetValue<string>("username"),
                 Password = zbxConfig.GetValue<string>("password"),
                 Database = zbxConfig.GetValue<string>("database"),
-                Timeout = 7200,
+                //Timeout = 7200,
             };
             maxNotKnown = zbxConfig.GetValue<int>("maxNotKnown", 1000);
             _semaphore = new SemaphoreSlim(1, 1);
@@ -114,9 +114,9 @@ namespace Sitescope2RemoteWrite.Storage
             var cmd = conn.CreateCommand();
             cmd.CommandTimeout = 7200;
 
-            if (labelDict.IsEmpty())
-                cmd.CommandText = selectAll_v6;
-            else
+            //if (labelDict.IsEmpty())
+            //    cmd.CommandText = selectAll_v6;
+            //else
             {
                 cmd.CommandText = selectById_v6;
                 cmd.CommandText = String.Format(cmd.CommandText, string.Join(',', ids));
