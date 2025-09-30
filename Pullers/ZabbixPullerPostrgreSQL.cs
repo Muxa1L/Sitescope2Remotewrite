@@ -149,6 +149,10 @@ namespace Sitescope2RemoteWrite.Processing
                 {
                     _logger.LogError(ex, "Error while pulling from binlog");
                 }
+                finally
+                {
+                    await client.DisposeAsync();
+                }
             }
             
             _logger.LogInformation(
