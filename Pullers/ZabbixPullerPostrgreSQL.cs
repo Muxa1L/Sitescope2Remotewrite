@@ -151,7 +151,8 @@ namespace Sitescope2RemoteWrite.Processing
                 }
                 finally
                 {
-                    await client.DisposeAsync();
+                    if (client != null)
+                        await client.DisposeAsync();
                 }
             }
             
@@ -219,7 +220,7 @@ namespace Sitescope2RemoteWrite.Processing
                         metricValue.value = await enumerator.Current.Get<double>();
                     }
 
-                        metricQueue.Enqueue(metricValue);
+                    metricQueue.Enqueue(metricValue);
                     client.SetReplicationStatus(binlogEvent.WalEnd);
                 }
                 //RelationMessage
