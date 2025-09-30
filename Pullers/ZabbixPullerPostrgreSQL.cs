@@ -55,6 +55,8 @@ namespace Sitescope2RemoteWrite.Processing
         private readonly string slotName;
         private readonly string publicationName;
         private readonly bool useStreamingReplication;
+        private readonly bool useBinaryReplication;
+        private readonly uint protocolVersion;
         private bool startFromFirst = false;
         private PgOutputReplicationSlot slot;
         //private PhysicalReplicationSlot slot;
@@ -68,6 +70,8 @@ namespace Sitescope2RemoteWrite.Processing
             slotName = zpullConfig.GetValue<string>("replSlot", "vmrepl");
             publicationName = zpullConfig.GetValue<string>("publication", "items");
             useStreamingReplication = zpullConfig.GetValue<bool>("streaming", false);
+            useBinaryReplication = zpullConfig.GetValue<bool>("binaryReplication", false);
+            protocolVersion = zpullConfig.GetValue<uint>("protocolVersion", 1);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -166,7 +170,12 @@ namespace Sitescope2RemoteWrite.Processing
             await foreach (var binlogEvent in 
                 client.StartReplication(
                     slot, 
-                    new PgOutputReplicationOptions(publicationName, 1, streaming: useStreamingReplication), 
+                    new PgOutputReplicationOptions(
+                        publicationName, 
+                        protocolVersion: protocolVersion, 
+                        streaming: useStreamingReplication,
+                        binary: useBinaryReplication
+                    ), 
                     stoppingToken
                 )
             )
