@@ -196,15 +196,26 @@ namespace Sitescope2RemoteWrite.Processing
                     //if (insert.Relation.RelationName == "history" || insert.Relation.RelationName == "history_uint")
                     var enumerator = insert.NewRow.GetAsyncEnumerator(stoppingToken);
                     var metricValue = new ZabbixMetric();
+                    if (!useBinaryReplication)
+                    {
+                        await enumerator.MoveNextAsync();
+                        metricValue.itemId = long.Parse(await enumerator.Current.Get<string>());
+                        await enumerator.MoveNextAsync();
+                        metricValue.time = long.Parse(await enumerator.Current.Get<string>()) * 1000;
+                        await enumerator.MoveNextAsync();
+                        metricValue.value = double.Parse(await enumerator.Current.Get<string>());
+                    }
+                    else
+                    {
+                        await enumerator.MoveNextAsync();
+                        metricValue.itemId = await enumerator.Current.Get<long>();
+                        await enumerator.MoveNextAsync();
+                        metricValue.time = await enumerator.Current.Get<long>() * 1000;
+                        await enumerator.MoveNextAsync();
+                        metricValue.value = await enumerator.Current.Get<double>();
+                    }
 
-                    await enumerator.MoveNextAsync();
-                    metricValue.itemId = long.Parse(await enumerator.Current.Get<string>());
-                    await enumerator.MoveNextAsync();
-                    metricValue.time = long.Parse(await enumerator.Current.Get<string>()) * 1000;
-                    await enumerator.MoveNextAsync();
-                    metricValue.value = double.Parse(await enumerator.Current.Get<string>());
-
-                    metricQueue.Enqueue(metricValue);
+                        metricQueue.Enqueue(metricValue);
                     client.SetReplicationStatus(binlogEvent.WalEnd);
                 }
                 //RelationMessage
