@@ -185,23 +185,22 @@ namespace Sitescope2RemoteWrite.Processing
                 if (binlogEvent is InsertMessage insert)
                 {
                     //if (insert.Relation.RelationName == "history" || insert.Relation.RelationName == "history_uint")
-                    {
-                        var enumerator = insert.NewRow.GetAsyncEnumerator(stoppingToken);
-                        var metricValue = new ZabbixMetric();
-                        
-                        await enumerator.MoveNextAsync();
-                        metricValue.itemId = long.Parse(await enumerator.Current.Get<string>());
-                        await enumerator.MoveNextAsync();
-                        metricValue.time = long.Parse(await enumerator.Current.Get<string>()) * 1000;
-                        await enumerator.MoveNextAsync();
-                        metricValue.value = double.Parse(await enumerator.Current.Get<string>());
+                    var enumerator = insert.NewRow.GetAsyncEnumerator(stoppingToken);
+                    var metricValue = new ZabbixMetric();
 
-                        metricQueue.Enqueue(metricValue);
-                    }
+                    await enumerator.MoveNextAsync();
+                    metricValue.itemId = long.Parse(await enumerator.Current.Get<string>());
+                    await enumerator.MoveNextAsync();
+                    metricValue.time = long.Parse(await enumerator.Current.Get<string>()) * 1000;
+                    await enumerator.MoveNextAsync();
+                    metricValue.value = double.Parse(await enumerator.Current.Get<string>());
+
+                    metricQueue.Enqueue(metricValue);
+                    client.SetReplicationStatus(binlogEvent.WalEnd);
                 }
                 //RelationMessage
 
-                client.SetReplicationStatus(binlogEvent.WalEnd);
+                
             }
         }
 
