@@ -80,7 +80,6 @@ namespace Sitescope2RemoteWrite.Processing
 
         private async void DoWorkAsync(object state)
         {
-            ITimeSeriesQueue timeSeriesQueue;
             if (_semaphore.Wait(100))
             {
                 Interlocked.Increment(ref inwait);
