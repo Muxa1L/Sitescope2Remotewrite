@@ -243,7 +243,7 @@ namespace Sitescope2RemoteWrite.Processing
                         metricValue.value = await enumerator.Current.Get<double>();
                     }
 
-                    //metricQueue.Enqueue(metricValue);
+                    metricQueue.Enqueue(metricValue);
                     
                 }
                 client.SetReplicationStatus(binlogEvent.WalEnd);
