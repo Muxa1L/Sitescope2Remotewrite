@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using Sitescope2RemoteWrite.PromPb;
 
 namespace Sitescope2RemoteWrite.Storage
@@ -12,7 +15,25 @@ namespace Sitescope2RemoteWrite.Storage
 
     public class LabelDict
     {
-        private Dictionary<long, List<Label>> labels = new Dictionary<long, List<Label>>(6 * 1000 * 1000);
+        private Dictionary<long, List<Label>> labels = new Dictionary<long, List<Label>>(10 * 1000 * 1000);
+        private Dictionary<long, DateTime> lastAccess = new Dictionary<long, DateTime>(10 * 1000 * 1000);
+        Timer cleaner;
+
+        public LabelDict()
+        {
+            cleaner = new Timer(Cleanup, null, 3600 * 1000, 3600 * 1000);
+        }
+
+        public void Cleanup(object state)
+        {
+            var notAccessed = lastAccess.Where(x => x.Value < DateTime.Now.AddHours(-1)).Select(x => x.Key).ToList();
+            foreach (var toRemove in notAccessed)
+            {
+                labels.Remove(toRemove);
+                lastAccess.Remove(toRemove);
+            }
+            Console.WriteLine($"removed {notAccessed.Count} not accessed for 1h labels");
+        }
 
         public bool IsEmpty()
         {
@@ -30,12 +51,14 @@ namespace Sitescope2RemoteWrite.Storage
                 return null;*/
             if (!labels.ContainsKey(id))
                 return null;
+            lastAccess[id] = DateTime.Now;
             return labels[id];
         }
 
         public void StoreLabels(long id, List<Label> obj)
         {
             labels[id] = obj;
+            lastAccess[id] = DateTime.MinValue;
             return;
         }
     }
