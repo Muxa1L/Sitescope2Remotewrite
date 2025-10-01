@@ -77,7 +77,7 @@ namespace Sitescope2RemoteWrite.Processing
                         options.Port = zpullConfig.GetValue<int>("port");
                         options.Username = zpullConfig.GetValue<string>("username");
                         options.Password = zpullConfig.GetValue<string>("password");
-                        options.SslMode = SslMode.DISABLED;
+                        options.SslMode = SslMode.Disabled;
                         options.HeartbeatInterval = TimeSpan.FromSeconds(30);
                         options.Blocking = true;
                         if (!String.IsNullOrEmpty(lastState?.filename))
@@ -130,7 +130,7 @@ namespace Sitescope2RemoteWrite.Processing
                 //Console.WriteLine($"{state.Filename}: {state.Position}");
                 //state.GtidState
 
-                if (binlogEvent is TableMapEvent tableMap)
+                if (binlogEvent.Item2 is TableMapEvent tableMap)
                 {
                     replStateStorage.SaveState(client.State.Filename, client.State.Position, null);
                     if (tableMap.TableName == "history" || tableMap.TableName == "history_uint")
@@ -139,7 +139,7 @@ namespace Sitescope2RemoteWrite.Processing
                             allowedTables.Add(tableMap.TableId);
                     }
                 }
-                else if (binlogEvent is WriteRowsEvent writeRows)
+                else if (binlogEvent.Item2 is WriteRowsEvent writeRows)
                 {
                     if (allowedTables.Contains(writeRows.TableId))
                     {

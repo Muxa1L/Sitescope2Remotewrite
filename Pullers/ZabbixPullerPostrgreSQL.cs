@@ -54,6 +54,9 @@ namespace Sitescope2RemoteWrite.Processing
         //private readonly IReplicationStateStorage replStateStorage;
         private readonly string slotName;
         private readonly string publicationName;
+        private readonly bool useStreamingReplication;
+        private readonly bool useBinaryReplication;
+        private readonly uint protocolVersion;
         private bool startFromFirst = false;
         private PgOutputReplicationSlot slot;
         //private PhysicalReplicationSlot slot;
@@ -66,7 +69,9 @@ namespace Sitescope2RemoteWrite.Processing
             zpullConfig = configuration.GetSection("zabbix");
             slotName = zpullConfig.GetValue<string>("replSlot", "vmrepl");
             publicationName = zpullConfig.GetValue<string>("publication", "items");
-
+            useStreamingReplication = zpullConfig.GetValue<bool>("streaming", false);
+            useBinaryReplication = zpullConfig.GetValue<bool>("binaryReplication", false);
+            protocolVersion = zpullConfig.GetValue<uint>("protocolVersion", 1);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -144,6 +149,11 @@ namespace Sitescope2RemoteWrite.Processing
                 {
                     _logger.LogError(ex, "Error while pulling from binlog");
                 }
+                finally
+                {
+                    if (client != null)
+                        await client.DisposeAsync();
+                }
             }
             
             _logger.LogInformation(
@@ -162,7 +172,18 @@ namespace Sitescope2RemoteWrite.Processing
             //{
             //    iter = client.StartReplication(slot, NpgsqlLogSequenceNumber.Invalid, stoppingToken, );
             //}
-            await foreach (var binlogEvent in client.StartReplication(slot, new PgOutputReplicationOptions(publicationName, 1), stoppingToken))
+            await foreach (var binlogEvent in 
+                client.StartReplication(
+                    slot, 
+                    new PgOutputReplicationOptions(
+                        publicationName, 
+                        protocolVersion: protocolVersion, 
+                        streaming: useStreamingReplication,
+                        binary: useBinaryReplication
+                    ), 
+                    stoppingToken
+                )
+            )
             {
                 //var test = new TestDecodingData();
                 //test.
@@ -178,23 +199,33 @@ namespace Sitescope2RemoteWrite.Processing
                 if (binlogEvent is InsertMessage insert)
                 {
                     //if (insert.Relation.RelationName == "history" || insert.Relation.RelationName == "history_uint")
+                    var enumerator = insert.NewRow.GetAsyncEnumerator(stoppingToken);
+                    var metricValue = new ZabbixMetric();
+                    if (!useBinaryReplication)
                     {
-                        var enumerator = insert.NewRow.GetAsyncEnumerator(stoppingToken);
-                        var metricValue = new ZabbixMetric();
-                        
                         await enumerator.MoveNextAsync();
                         metricValue.itemId = long.Parse(await enumerator.Current.Get<string>());
                         await enumerator.MoveNextAsync();
-                        metricValue.time = long.Parse(await enumerator.Current.Get<string>());
+                        metricValue.time = long.Parse(await enumerator.Current.Get<string>()) * 1000;
                         await enumerator.MoveNextAsync();
                         metricValue.value = double.Parse(await enumerator.Current.Get<string>());
-
-                        metricQueue.Enqueue(metricValue);
                     }
+                    else
+                    {
+                        await enumerator.MoveNextAsync();
+                        metricValue.itemId = await enumerator.Current.Get<long>();
+                        await enumerator.MoveNextAsync();
+                        metricValue.time = await enumerator.Current.Get<long>() * 1000;
+                        await enumerator.MoveNextAsync();
+                        metricValue.value = await enumerator.Current.Get<double>();
+                    }
+
+                    metricQueue.Enqueue(metricValue);
+                    client.SetReplicationStatus(binlogEvent.WalEnd);
                 }
                 //RelationMessage
 
-                client.SetReplicationStatus(binlogEvent.WalEnd);
+                
             }
         }
 
