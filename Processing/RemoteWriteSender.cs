@@ -47,7 +47,7 @@ namespace Sitescope2RemoteWrite.Processing
         private SemaphoreSlim _semaphore; 
         private int inwait = 0;
         private string remoteWriteUrl = "";
-        private int sendPeriod = 0;
+        private double sendPeriod = 0;
         private int chunks;
 
         public RemoteWriteSender(ILogger<RemoteWriteSender> logger, IHttpClientFactory clientFactory, IConfiguration config, ITimeSeriesQueue timeSeriesQueue)
@@ -56,7 +56,7 @@ namespace Sitescope2RemoteWrite.Processing
             _logger = logger;     
             _remoteWriteConfig = config.GetSection("RemoteWrite");
             remoteWriteUrl = _remoteWriteConfig.GetValue<string>("url");
-            sendPeriod = _remoteWriteConfig.GetValue<int>("period", 1);
+            sendPeriod = _remoteWriteConfig.GetValue<double>("period", 1);
             var threads = _remoteWriteConfig.GetValue<int>("threads", 1);
             chunks = _remoteWriteConfig.GetValue<int>("chunks", 100);
             _semaphore = new SemaphoreSlim(threads, threads);

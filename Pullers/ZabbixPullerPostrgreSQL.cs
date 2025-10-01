@@ -112,7 +112,7 @@ namespace Sitescope2RemoteWrite.Processing
                                 {
                                     var metricValue = new ZabbixMetric()
                                     {
-                                        itemId = reader.GetInt64(1),
+                                        itemId = reader.GetInt64(0),
                                         time = reader.GetInt64(1),
                                         value = reader.GetDouble(2),
                                     };
@@ -250,7 +250,8 @@ namespace Sitescope2RemoteWrite.Processing
                 if (binlogEvent is InsertMessage insert)
                 {
 
-                    //if (insert.Relation.RelationName == "history" || insert.Relation.RelationName == "history_uint")
+                    if (!insert.Relation.RelationName.StartsWith("_hyper"))
+                        continue;
                     var enumerator = insert.NewRow.GetAsyncEnumerator(stoppingToken);
                     var metricValue = new ZabbixMetric();
                     if (!useBinaryReplication)
