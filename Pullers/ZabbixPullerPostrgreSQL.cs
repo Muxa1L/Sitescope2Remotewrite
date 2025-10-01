@@ -120,6 +120,7 @@ namespace Sitescope2RemoteWrite.Processing
                                 }
                             }
                         }
+                        return;
                     }
 
                     var startLsn = NpgsqlLogSequenceNumber.Invalid;
