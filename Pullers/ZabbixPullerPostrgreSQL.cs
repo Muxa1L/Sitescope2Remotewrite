@@ -113,7 +113,7 @@ namespace Sitescope2RemoteWrite.Processing
                                     var metricValue = new ZabbixMetric()
                                     {
                                         itemId = reader.GetInt64(0),
-                                        time = reader.GetInt64(1),
+                                        time = reader.GetInt64(1)*1000,
                                         value = reader.GetDouble(2),
                                     };
                                     metricQueue.Enqueue(metricValue);
@@ -232,7 +232,7 @@ namespace Sitescope2RemoteWrite.Processing
                 )
             )
             {
-                try
+                //try
                 {
                     if (debug)
                         counter++;
@@ -282,9 +282,9 @@ namespace Sitescope2RemoteWrite.Processing
                     //RelationMessage
 
                 }
-                catch (Exception ex) {
-                    _logger.LogError("aa", ex);
-                }
+                //catch (Exception ex) {
+                //    _logger.LogError("aa", ex);
+                //}
 
 
 
