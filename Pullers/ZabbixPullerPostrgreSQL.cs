@@ -98,6 +98,7 @@ namespace Sitescope2RemoteWrite.Processing
                     var startLsn = NpgsqlLogSequenceNumber.Invalid;
 
                     client = new LogicalReplicationConnection(connStrBuild.ConnectionString);
+                    //client.WalReceiverTimeout = Timeout.InfiniteTimeSpan;
                     await client.Open();
                     await using (var cmd = ds.CreateCommand()) {
                         cmd.CommandText = "SELECT confirmed_flush_lsn FROM pg_replication_slots WHERE slot_name = $1";
@@ -172,6 +173,23 @@ namespace Sitescope2RemoteWrite.Processing
             //{
             //    iter = client.StartReplication(slot, NpgsqlLogSequenceNumber.Invalid, stoppingToken, );
             //}
+            var counter = 0;
+            var debug = false;
+
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                debug = true;
+                var periodS = 5;
+                var timer = new Timer((aaa) =>
+                {
+                    //lock (locker)
+                    {
+                        Console.WriteLine($"{counter / periodS}/s avg");
+                        counter = 0;
+                    }
+                }, null, 0, periodS * 1000);
+            }
+            
             await foreach (var binlogEvent in 
                 client.StartReplication(
                     slot, 
@@ -185,6 +203,10 @@ namespace Sitescope2RemoteWrite.Processing
                 )
             )
             {
+                if (debug)
+                    counter++;
+                //client.SetReplicationStatus(binlogEvent.WalEnd);
+                //continue;
                 //var test = new TestDecodingData();
                 //test.
                 //Console.WriteLine(binlogEvent.ToString());
@@ -198,6 +220,7 @@ namespace Sitescope2RemoteWrite.Processing
                 //state.GtidState
                 if (binlogEvent is InsertMessage insert)
                 {
+
                     //if (insert.Relation.RelationName == "history" || insert.Relation.RelationName == "history_uint")
                     var enumerator = insert.NewRow.GetAsyncEnumerator(stoppingToken);
                     var metricValue = new ZabbixMetric();
@@ -220,12 +243,13 @@ namespace Sitescope2RemoteWrite.Processing
                         metricValue.value = await enumerator.Current.Get<double>();
                     }
 
-                    metricQueue.Enqueue(metricValue);
-                    client.SetReplicationStatus(binlogEvent.WalEnd);
+                    //metricQueue.Enqueue(metricValue);
+                    
                 }
+                client.SetReplicationStatus(binlogEvent.WalEnd);
                 //RelationMessage
 
-                
+
             }
         }
 
