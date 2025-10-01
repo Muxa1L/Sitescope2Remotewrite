@@ -27,6 +27,7 @@ namespace Sitescope2RemoteWrite.Storage
         private ILogger<LabelStoragePostgreSQL> _logger;
         //private int zbxVersion;
         private int maxNotKnown;
+        private readonly bool loadAllOnStart = false;
         private string connString;
         private NpgsqlConnection sqlConnection;
         private List<Regex> regexps = new List<Regex>();
@@ -36,6 +37,7 @@ namespace Sitescope2RemoteWrite.Storage
         {
             labelDict = new LabelDict();
             var zbxConfig = config.GetSection("zabbix");
+            loadAllOnStart = zbxConfig.GetValue<bool>("loadall", false);
             //zbxVersion = zbxConfig.GetValue<int>("version", 3);
             var connStrBuild = new NpgsqlConnectionStringBuilder
             {
@@ -114,7 +116,7 @@ namespace Sitescope2RemoteWrite.Storage
             var cmd = conn.CreateCommand();
             cmd.CommandTimeout = 7200;
 
-            if (labelDict.IsEmpty())
+            if (labelDict.IsEmpty() && loadAllOnStart)
                 cmd.CommandText = selectAll_v6;
             else
             {
