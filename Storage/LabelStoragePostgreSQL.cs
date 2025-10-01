@@ -62,7 +62,7 @@ namespace Sitescope2RemoteWrite.Storage
 
             _logger = logger;
             
-            _getNotKnown = new Timer(GetNotKnownAsync, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
+            _getNotKnown = new Timer(GetNotKnownAsync, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
         }
 
         private async void GetNotKnownAsync(object state)

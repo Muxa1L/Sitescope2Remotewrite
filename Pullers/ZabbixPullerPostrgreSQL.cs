@@ -17,6 +17,7 @@ using Sitescope2RemoteWrite.Storage;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -95,24 +96,52 @@ namespace Sitescope2RemoteWrite.Processing
                     };
                     await using var ds = new NpgsqlConnection(connStrBuild.ConnectionString);
                     await ds.OpenAsync();
+                    var replayFrom = zpullConfig.GetValue<DateTime>("replayfrom", DateTime.MinValue);
+                    var replayTo = zpullConfig.GetValue<DateTime>("replayto", DateTime.MaxValue);
+                    if (replayFrom.Year > 1)
+                    {
+                        await using (var cmd = ds.CreateCommand())
+                        {
+                            cmd.CommandText = "SELECT itemid, clock, value FROM history WHERE clock BETWEEN $1 AND $2 ORDER BY itemid";
+                            cmd.CommandTimeout = 0;
+                            cmd.Parameters.AddWithValue(replayFrom.ToUnixTimeStamp());
+                            cmd.Parameters.AddWithValue(replayTo.ToUnixTimeStamp());
+                            await using (var reader = await cmd.ExecuteReaderAsync(stoppingToken))
+                            {
+                                while(await reader.ReadAsync())
+                                {
+                                    var metricValue = new ZabbixMetric()
+                                    {
+                                        itemId = reader.GetInt64(1),
+                                        time = reader.GetInt64(1),
+                                        value = reader.GetDouble(2),
+                                    };
+                                    metricQueue.Enqueue(metricValue);
+                                }
+                            }
+                        }
+                    }
+
                     var startLsn = NpgsqlLogSequenceNumber.Invalid;
 
                     client = new LogicalReplicationConnection(connStrBuild.ConnectionString);
                     //client.WalReceiverTimeout = Timeout.InfiniteTimeSpan;
                     await client.Open();
                     await using (var cmd = ds.CreateCommand()) {
-                        cmd.CommandText = "SELECT confirmed_flush_lsn FROM pg_replication_slots WHERE slot_name = $1";
+                        cmd.CommandText = "SELECT confirmed_flush_lsn, wal_status FROM pg_replication_slots WHERE slot_name = $1";
                         cmd.Parameters.AddWithValue(slotName);
 
                         await using (var reader = await cmd.ExecuteReaderAsync(stoppingToken))
                             if (await reader.ReadAsync())
                             {
-                                if (!reader.IsDBNull(0))
+                                if (reader.GetFieldValue<string>(1) != "lost")
                                     startLsn = reader.GetFieldValue<NpgsqlLogSequenceNumber>(0);
                                 else
                                 {
                                     await client.DropReplicationSlot(slotName);
+                                    _logger.LogError("Replica lost. Restarting");
                                 }
+                                    
                                     
                             }
                                 
