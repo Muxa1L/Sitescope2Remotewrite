@@ -21,7 +21,7 @@ namespace Sitescope2RemoteWrite.Storage
 
         public LabelDict()
         {
-            cleaner = new Timer(Cleanup, null, 3600 * 1000, 3600 * 1000);
+            //cleaner = new Timer(Cleanup, null, 3600 * 1000, 3600 * 1000);
         }
 
         public void Cleanup(object state)
