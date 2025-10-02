@@ -21,16 +21,19 @@ namespace Sitescope2RemoteWrite.Storage
 
         public LabelDict()
         {
-            //cleaner = new Timer(Cleanup, null, 3600 * 1000, 3600 * 1000);
+            cleaner = new Timer(Cleanup, null, 3600 * 1000, 3600 * 1000);
         }
 
         public void Cleanup(object state)
         {
-            var notAccessed = lastAccess.Where(x => x.Value < DateTime.Now.AddHours(-1)).Select(x => x.Key).ToList();
-            foreach (var toRemove in notAccessed)
+            var notAccessed = lastAccess.Where(x => x.Value < DateTime.Now.AddHours(-24)).Select(x => x.Key).ToList();
+            lock (lastAccess)
             {
-                labels.Remove(toRemove);
-                lastAccess.Remove(toRemove);
+                foreach (var toRemove in notAccessed)
+                {
+                    labels.Remove(toRemove);
+                    lastAccess.Remove(toRemove);
+                }
             }
             Console.WriteLine($"removed {notAccessed.Count} not accessed for 1h labels");
         }
@@ -51,15 +54,20 @@ namespace Sitescope2RemoteWrite.Storage
                 return null;*/
             if (!labels.ContainsKey(id))
                 return null;
-            lastAccess[id] = DateTime.Now;
+            lock (lastAccess)
+            {
+                lastAccess[id] = DateTime.Now;
+            }
             return labels[id];
         }
 
         public void StoreLabels(long id, List<Label> obj)
         {
-            labels[id] = obj;
-            lastAccess[id] = DateTime.MinValue;
-            return;
+            lock (lastAccess)
+            {
+                labels[id] = obj;
+                lastAccess[id] = DateTime.MinValue;
+            }
         }
     }
 }
