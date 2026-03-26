@@ -245,37 +245,37 @@ namespace Sitescope2RemoteWrite.Storage
         //LEFT JOIN hosts prx ON hst.proxy_hostid = prx.hostid
         private string selectById_v6 = @"SELECT itm.itemid, 
 itm.name item_name, itm.key_ __name__, 
-hst.host host_host , hst.name host_name,
-prx.name proxy_name, hgrps.groups host_groups, hiface.dns dns, hiface.ip ips, tmpl.name template, apps.name apps
-FROM items itm
+hst.host host_host , hst.name host_name, 
+prx.name proxy_name, hgrps.groups host_groups, hiface.dns dns, hiface.ip ips, tmpl.name template, apps.name apps 
+FROM items itm 
 LEFT JOIN hosts hst ON hst.hostid = itm.hostid 
-LEFT JOIN proxy prx ON hst.proxyid = prx.proxyid
-LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) groups FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid GROUP BY hostid) hgrps
-ON hgrps.hostid = itm.hostid
-LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(ip, ';' ORDER BY ip ASC) ip FROM public.interface GROUP BY hostid ) hiface
-ON hiface.hostid = itm.hostid
-LEFT JOIN(SELECT itemid tmplid, hosts.name name FROM items JOIN hosts ON hosts.hostid = items.hostid) tmpl ON tmpl.tmplid = itm.templateid
-LEFT JOIN (SELECT itemid appitemid, STRING_AGG(value, ';' ORDER BY value ASC) name
-  FROM public.item_tag itmapp
-  GROUP BY itemid
-) apps ON apps.appitemid = itm.itemid
+LEFT JOIN proxy prx ON hst.proxyid = prx.proxyid 
+LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) groups FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid GROUP BY hostid) hgrps 
+ON hgrps.hostid = itm.hostid 
+LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(ip, ';' ORDER BY ip ASC) ip FROM public.interface GROUP BY hostid ) hiface 
+ON hiface.hostid = itm.hostid 
+LEFT JOIN(SELECT itemid tmplid, hosts.name name FROM items JOIN hosts ON hosts.hostid = items.hostid) tmpl ON tmpl.tmplid = itm.templateid 
+LEFT JOIN (SELECT itemid appitemid, STRING_AGG(value, ';' ORDER BY value ASC) name 
+  FROM public.item_tag itmapp 
+  GROUP BY itemid 
+) apps ON apps.appitemid = itm.itemid 
 WHERE value_type IN(0, 3) AND itemid IN ({0})";
         private string selectAll_v6 = @"SELECT itm.itemid, 
 itm.name item_name, itm.key_ __name__, 
-hst.host host_host , hst.name host_name,
-prx.name proxy_name, hgrps.groups host_groups, hiface.dns dns, hiface.ip ips, tmpl.name template, apps.name apps
-FROM items itm
+hst.host host_host , hst.name host_name, 
+prx.name proxy_name, hgrps.groups host_groups, hiface.dns dns, hiface.ip ips, tmpl.name template, apps.name apps 
+FROM items itm 
 LEFT JOIN hosts hst ON hst.hostid = itm.hostid 
-LEFT JOIN proxy prx ON hst.proxyid = prx.proxyid
-LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) groups FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid GROUP BY hostid) hgrps
-ON hgrps.hostid = itm.hostid
-LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(ip, ';' ORDER BY ip ASC) ip FROM public.interface GROUP BY hostid ) hiface
-ON hiface.hostid = itm.hostid
-LEFT JOIN(SELECT itemid tmplid, hosts.name name FROM items JOIN hosts ON hosts.hostid = items.hostid) tmpl ON tmpl.tmplid = itm.templateid
-LEFT JOIN (SELECT itemid appitemid, STRING_AGG(value, ';' ORDER BY value ASC) name
-  FROM public.item_tag itmapp
-  GROUP BY itemid
-) apps ON apps.appitemid = itm.itemid
+LEFT JOIN proxy prx ON hst.proxyid = prx.proxyid 
+LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) groups FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid GROUP BY hostid) hgrps 
+ON hgrps.hostid = itm.hostid 
+LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(ip, ';' ORDER BY ip ASC) ip FROM public.interface GROUP BY hostid ) hiface 
+ON hiface.hostid = itm.hostid 
+LEFT JOIN(SELECT itemid tmplid, hosts.name name FROM items JOIN hosts ON hosts.hostid = items.hostid) tmpl ON tmpl.tmplid = itm.templateid 
+LEFT JOIN (SELECT itemid appitemid, STRING_AGG(value, ';' ORDER BY value ASC) name 
+  FROM public.item_tag itmapp 
+  GROUP BY itemid 
+) apps ON apps.appitemid = itm.itemid 
 WHERE value_type IN(0, 3) AND itm.status = 0";
     }
 }
