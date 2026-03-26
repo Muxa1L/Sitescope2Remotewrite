@@ -241,13 +241,14 @@ namespace Sitescope2RemoteWrite.Storage
 
 
         /**/
+        //prx.host proxy_host, prx.name proxy_name, 
+        //LEFT JOIN hosts prx ON hst.proxy_hostid = prx.hostid
         private string selectById_v6 = @"SELECT itm.itemid, 
 itm.name item_name, itm.key_ __name__, 
 hst.host host_host , hst.name host_name,
-prx.host proxy_host, prx.name proxy_name, hgrps.groups host_groups, hiface.dns dns, hiface.ip ips, tmpl.name template, apps.name apps
+hgrps.groups host_groups, hiface.dns dns, hiface.ip ips, tmpl.name template, apps.name apps
 FROM items itm
 LEFT JOIN hosts hst ON hst.hostid = itm.hostid 
-LEFT JOIN hosts prx ON hst.proxy_hostid = prx.hostid
 LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) ""groups"" FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid WHERE gr.internal != 1 GROUP BY hostid) hgrps
   ON hgrps.hostid = itm.hostid
 LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(ip, ';' ORDER BY ip ASC) ip FROM public.interface GROUP BY hostid ) hiface
@@ -261,10 +262,9 @@ WHERE value_type IN(0, 3) AND itemid IN ({0})";
         private string selectAll_v6 = @"SELECT itm.itemid, 
 itm.name item_name, itm.key_ __name__, 
 hst.host host_host , hst.name host_name,
-prx.host proxy_host, prx.name proxy_name, hgrps.groups host_groups, hiface.dns dns, hiface.ip ips, tmpl.name template, apps.name apps
+hgrps.groups host_groups, hiface.dns dns, hiface.ip ips, tmpl.name template, apps.name apps
 FROM items itm
 LEFT JOIN hosts hst ON hst.hostid = itm.hostid 
-LEFT JOIN hosts prx ON hst.proxy_hostid = prx.hostid
 LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) ""groups"" FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid WHERE gr.internal != 1 GROUP BY hostid) hgrps
   ON hgrps.hostid = itm.hostid
 LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(ip, ';' ORDER BY ip ASC) ip FROM public.interface GROUP BY hostid ) hiface
