@@ -250,7 +250,7 @@ prx.name proxy_name, hgrps.groups host_groups, hiface.dns dns, hiface.ip ips, tm
 FROM items itm
 LEFT JOIN hosts hst ON hst.hostid = itm.hostid 
 LEFT JOIN proxy prx ON hst.proxyid = prx.proxyid
-LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) "groups" FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid GROUP BY hostid) hgrps
+LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) \"groups\" FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid GROUP BY hostid) hgrps
   ON hgrps.hostid = itm.hostid
 LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(ip, ';' ORDER BY ip ASC) ip FROM public.interface GROUP BY hostid ) hiface
  ON hiface.hostid = itm.hostid
@@ -267,7 +267,7 @@ prx.name proxy_name, hgrps.groups host_groups, hiface.dns dns, hiface.ip ips, tm
 FROM items itm
 LEFT JOIN hosts hst ON hst.hostid = itm.hostid 
 LEFT JOIN proxy prx ON hst.proxyid = prx.proxyid
-LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) "groups" FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid GROUP BY hostid) hgrps
+LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) \"groups\" FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid GROUP BY hostid) hgrps
   ON hgrps.hostid = itm.hostid
 LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(ip, ';' ORDER BY ip ASC) ip FROM public.interface GROUP BY hostid ) hiface
  ON hiface.hostid = itm.hostid
