@@ -256,8 +256,8 @@ LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(i
 ON hiface.hostid = itm.hostid 
 LEFT JOIN(SELECT itemid tmplid, hosts.name name FROM items JOIN hosts ON hosts.hostid = items.hostid) tmpl ON tmpl.tmplid = itm.templateid 
 LEFT JOIN (SELECT itemid appitemid, STRING_AGG(value, ';' ORDER BY value ASC) name 
-  FROM public.item_tag itmapp 
-  GROUP BY itemid 
+FROM public.item_tag itmapp 
+GROUP BY itemid 
 ) apps ON apps.appitemid = itm.itemid 
 WHERE value_type IN(0, 3) AND itemid IN ({0})";
         private string selectAll_v6 = @"SELECT itm.itemid, 
@@ -273,8 +273,8 @@ LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(i
 ON hiface.hostid = itm.hostid 
 LEFT JOIN(SELECT itemid tmplid, hosts.name name FROM items JOIN hosts ON hosts.hostid = items.hostid) tmpl ON tmpl.tmplid = itm.templateid 
 LEFT JOIN (SELECT itemid appitemid, STRING_AGG(value, ';' ORDER BY value ASC) name 
-  FROM public.item_tag itmapp 
-  GROUP BY itemid 
+FROM public.item_tag itmapp 
+GROUP BY itemid 
 ) apps ON apps.appitemid = itm.itemid 
 WHERE value_type IN(0, 3) AND itm.status = 0";
     }
