@@ -268,9 +268,9 @@ FROM items itm
 LEFT JOIN hosts hst ON hst.hostid = itm.hostid 
 LEFT JOIN proxy prx ON hst.proxyid = prx.proxyid
 LEFT JOIN (SELECT hostid, STRING_AGG(name, ';' ORDER BY name ASC) groups FROM public.hosts_groups hgr JOIN public.hstgrp gr ON hgr.groupid = gr.groupid GROUP BY hostid) hgrps
-  ON hgrps.hostid = itm.hostid
+ON hgrps.hostid = itm.hostid
 LEFT JOIN(SELECT hostid, STRING_AGG(dns, ';' ORDER BY dns ASC) dns, STRING_AGG(ip, ';' ORDER BY ip ASC) ip FROM public.interface GROUP BY hostid ) hiface
- ON hiface.hostid = itm.hostid
+ON hiface.hostid = itm.hostid
 LEFT JOIN(SELECT itemid tmplid, hosts.name name FROM items JOIN hosts ON hosts.hostid = items.hostid) tmpl ON tmpl.tmplid = itm.templateid
 LEFT JOIN (SELECT itemid appitemid, STRING_AGG(value, ';' ORDER BY value ASC) name
   FROM public.item_tag itmapp
